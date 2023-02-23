@@ -1,0 +1,573 @@
+---
+title: "Bayesian Statistics in Social Sciences"
+format:
+  revealjs:
+    incremental: true
+editor: visual
+---
+
+# About class
+
+## About me
+
+-   **Instructor**: Wiktor Soral, PhD
+-   **E-mail**: wiktor.soral\@psych.uw.edu.pl
+-   **Office**: room no. 96
+-   **Office hours**: Thursday, 1:45-3:00PM
+
+## Course outline
+
+1.  Intro to Bayesian statistics: review (23-Feb-23)
+2.  Intro to MCMC: analysis of MCMC draws (02-Mar-23)
+3.  Intro to MCMC: using *brms* (09-Mar-23)
+4.  Bayesian linear models: simple and polynomial regression, multiple regression, categorical predictors (23-Mar-23)
+5.  Bayesian linear models: interactions, fitting factorial ANOVA (30-Mar-23)
+6.  Bayesian generalized linear models (20-Apr-23)
+7.  Bayesian multilevel models (04-May-23)
+8.  Final exam (11-May-23)
+
+## Assessment methods:
+
+-   Final exam (11-May-23)
+
+-   Home assignments (6 assignments)
+
+-   **Final score** = 60% \* (home assignments) + 40% \* (final exam score)
+
+-   Total score and both exam scores should be at least at the 50% level to pass the course.
+
+## Attendance rules
+
+-   Students are allowed to miss 1 classes without excuse and will not pass the course with more than 1 missed class.
+
+-   In the case of excuse, students may miss more than 1 class. However, they will have to do some additional tasks (how many depends on the number of classes missed).
+
+## Course website
+
+[https://github.com/wsoral/bsss2023](https://github.com/wsoral/bsss2023){preview-link="true"}
+
+# Intro to Bayesian statistics: review
+
+## Classical (frequentists) view
+
+-   There is/are some unobserved parameter(s) - $\theta$ - with (a) **fixed** value(s)
+-   We observe some manifestations of this/these parameters under repeated experimentation - sampled **random** data
+-   We infer how likely are the observed data given the values of parameters
+-   Probability: What is a chance of observing the values of data given the value of parameter?
+
+## Classical (frequentists) view
+
+-   For example: In a sample, we observe a between-group difference of 2 points in IQ. In how many samples (out of 100), we will observe such a difference (or larger) if the true value in the population is 0.
+
+## Classical (frequentists) view
+
+```{r}
+library(tidyverse)
+set.seed(1234)
+ms = rnorm(99)
+ms[100] = 1
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=1, ))+
+  geom_col(aes(fill=sample),width = 0.02)+
+  geom_col(data = tibble(value=0, y=1.3), width = 0.02, fill="red", alpha=0.5)+
+  scale_fill_manual(values=c("grey10", "grey80"))+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Classical (frequentists) view
+
+```{r}
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=1, ))+
+  geom_col(aes(fill=sample),width = 0.02)+
+  geom_col(data = tibble(value=0, y=1.3), width = 0.02, fill="red", alpha=0.5)+
+  stat_function(fun = dnorm, geom = "polygon", color = "blue", fill = "blue", alpha = 0.5)+
+  scale_fill_manual(values=c("grey10", "grey80"))+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Classical (frequentists) view
+
+```{r}
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=1, ))+
+  geom_col(aes(fill=sample),width = 0.02)+
+  geom_col(data = tibble(value=0, y=1.3), width = 0.02, fill="red", alpha=0.5)+
+  stat_function(fun = dnorm, geom = "polygon", color = "blue", fill = "blue", alpha = 0.5)+
+  scale_fill_manual(values=c("grey10", "grey80"))+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Bayesian statistics
+
+-   Bayesian statistics is a branch of statistics that focuses on updating our beliefs about a parameter of interest based on new evidence or data.
+-   It's based on Bayes' theorem, which describes how we can update the probability of a hypothesis (such as a model parameter) based on new data.
+
+## Bayesian statistics
+
+-   In Bayesian statistics, we start with a **prior distribution**, which represents our beliefs about the parameter before we see any data, and then update it using the **likelihood of the data** given the parameter, to obtain a **posterior distribution**, which represents our beliefs about the parameter after seeing the data.
+
+## Bayesian statistics
+
+```{r}
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=1))+
+  stat_function(fun = dnorm, args = list(mean=0, sd=0.2), geom = "polygon", color = "red", fill = "red", alpha = 0.5)+
+  geom_text(data=tibble(value=0, y=2.1, label="prior belief"), 
+            aes(x=value, y=y, label=label),colour="red", inherit.aes = F)+
+  scale_fill_manual(values=c("grey10", "transparent"))+
+  scale_x_continuous(limits = c(-2,4))+
+  guides(fill="none")+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Bayesian statistics
+
+```{r}
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=2))+
+  geom_col(aes(fill=sample),width = 0.02)+
+  stat_function(fun = dnorm, args = list(mean=0, sd=0.2), geom = "polygon", color = "red", fill = "red", alpha = 0.5)+
+  geom_text(data=tibble(value=0, y=2.1, label="prior belief"), 
+            aes(x=value, y=y, label=label),colour="red", inherit.aes = F)+
+  stat_function(fun = dnorm, args = list(mean=1, sd=0.3), geom = "polygon", color = "blue", fill = "blue", alpha = 0.5)+
+  geom_text(data=tibble(value=1, y=1.5, label="evidence"), 
+            aes(x=value, y=y, label=label),colour="blue", inherit.aes = F)+
+  scale_fill_manual(values=c("grey10", "transparent"))+
+  scale_x_continuous(limits = c(-2,4))+
+  guides(fill="none")+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Bayesian statistics
+
+```{r}
+enframe(ms) %>% 
+  mutate(sample =c(rep("unobserved",99), "observed")) %>% 
+  ggplot(aes(x=value, y=2))+
+  geom_col(aes(fill=sample),width = 0.02)+
+  stat_function(fun = dnorm, args = list(mean=0, sd=0.2), geom = "polygon", color = "red", fill = "red", alpha = 0.5)+
+  geom_text(data=tibble(value=0, y=2.1, label="prior belief"), 
+            aes(x=value, y=y, label=label),colour="red", inherit.aes = F)+
+  stat_function(fun = dnorm, args = list(mean=1, sd=0.3), geom = "polygon", color = "blue", fill = "blue", alpha = 0.5)+
+  geom_text(data=tibble(value=1, y=1.5, label="evidence"), 
+            aes(x=value, y=y, label=label),colour="blue", inherit.aes = F)+
+  stat_function(fun = dnorm, args = list(mean=0.7, sd=0.25), geom = "polygon", color = "green", fill = "green", alpha = 0.5)+
+  geom_text(data=tibble(value=0.7, y=1.7, label="posterior"), 
+            aes(x=value, y=y, label=label),colour="green", inherit.aes = F)+
+  scale_fill_manual(values=c("grey10", "transparent"))+
+  scale_x_continuous(limits = c(-2,4))+
+  guides(fill="none")+
+  theme_classic()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank(),
+        legend.position = "top")
+```
+
+## Bayes theorem
+
+::: {.absolute top="40%" left="15%"}
+$$Pr(A|B) = \frac{Pr(B|A) \times Pr(A)}{Pr(B)}$$
+:::
+
+## Bayes theorem
+
+-   In a population of 100,000 people, 100 of them are vampires.
+-   There is a test for vampirism construed by some big-pharma company, but...
+-   Of the 100 who are vampires, only 80 (80%) of them will test positive for vampirism
+-   Of the 99,900 mortals, 4995 (5%) of them will test positive for vampirism.
+-   If we test all 100,000 people, what proportion of those who test positive for vampirism actually are vampires?
+
+## Bayes theorem
+
+-   data ($\mathcal{D}$)
+-   parameters ($\theta$)
+
+::: {.absolute top="40%" left="15%"}
+$$Pr(\theta| \mathcal{D}) = \frac{Pr(\mathcal{D} | \theta) \times Pr(\theta)}{\int Pr(\mathcal{D} | \theta) \times Pr(\theta) \mathrm{d}\theta}$$
+:::
+
+## Bayes theorem
+
+::: {.absolute top="40%" left="15%"}
+$$Pr(\theta| \mathcal{D}) \approx Pr(\mathcal{D} | \theta) \times Pr(\theta)$$
+:::
+
+## Bayes theorem
+
+::: {.absolute top="40%" left="15%"}
+$$posterior \approx likelihood \times prior$$
+:::
+
+## Probability distributions
+
+```{r}
+tibble(x = c("x1","x2"),
+       y = c(0.6, 0.4)) %>% 
+  ggplot(aes(x, y))+
+  geom_col()+
+  labs(x="X",y="P(X)")+
+  ggtitle("Bernoulli distribution", subtitle = "e.g., success or failure")+
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))+
+  theme_classic()
+```
+
+## Probability distributions
+
+```{r}
+tibble(x = 0:10,
+       y = dbinom(0:10, size = 10, prob = 0.5)) %>% 
+  ggplot(aes(x, y))+
+  geom_col()+
+  labs(x="X",y="P(X)")+
+  ggtitle("Binomial distribution", subtitle = "e.g., number of success across 10 trials")+
+  scale_y_continuous(limits = c(0,.3), expand = c(0,0))+
+  scale_x_continuous(breaks=0:10)+
+  theme_classic()
+```
+
+## Probability distributions
+
+```{r}
+tibble(x = seq(150, 210)) %>% 
+  ggplot(aes(x))+
+  stat_function(geom="polygon", fun = dnorm, args=list(mean=177.8, sd=7.62), alpha=0.6)+
+  labs(x="X",y="P(X)")+
+  ggtitle("Normal distribution", subtitle = "e.g., distribution of height")+
+  theme_classic()
+```
+
+## Probability distributions
+
+```{r}
+tibble(x = seq(-4,4)) %>% 
+  ggplot(aes(x))+
+  stat_function(fun = dnorm, linetype=2)+
+  stat_function(fun = dt, args=list(df=2))+
+  labs(x="X",y="P(X)")+
+  ggtitle("Student's t distribution", subtitle = "e.g., average of small number of trials")+
+  theme_classic()
+```
+
+## Probability distributions
+
+```{r}
+tibble(x = 0:10) %>% 
+  ggplot(aes(x))+
+  stat_function(geom="col",fun = dpois, args = c(lambda=2), alpha=.6, n=11)+
+  labs(x="X",y="P(X)")+
+  ggtitle("Poisson distribution", subtitle = "e.g., for count data")+
+  scale_x_continuous(breaks=0:10)+
+  theme_classic()
+```
+
+## Probability distributions
+
+```{r}
+tibble(x = seq(0,1)) %>% 
+  ggplot(aes(x))+
+  stat_function(geom="polygon",fun = dbeta, args = c(shape1=3, shape2=4), alpha=.6)+
+  labs(x="X",y="P(X)")+
+  ggtitle("Beta distribution", subtitle = "e.g., proportion of something")+
+  theme_classic()
+```
+
+# Bayesian updating
+
+## Bayesian updating
+
+-   Suppose you have build a perfect detector of vampires.
+-   You start examining randomly encountered people.
+-   You have obtained a sample of 10 independent records.
+-   Vampire, Human, Human, Vampire, Human, Human, Human, Human, Human, Human
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 1,1), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 2,1), size=1.5, linetype=1)+
+  ggtitle("V")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 2,1), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 2,2), size=1.5, linetype=1)+
+  ggtitle("V H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 2,2), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 2,3), size=1.5, linetype=1)+
+  ggtitle("V H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 2,3), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,3), size=1.5, linetype=1)+
+  ggtitle("V H H V")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,3), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,4), size=1.5, linetype=1)+
+  ggtitle("V H H V H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,4), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,5), size=1.5, linetype=1)+
+  ggtitle("V H H V H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,5), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,6), size=1.5, linetype=1)+
+  ggtitle("V H H V H H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,6), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,7), size=1.5, linetype=1)+
+  ggtitle("V H H V H H H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,7), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,8), size=1.5, linetype=1)+
+  ggtitle("V H H V H H H H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+## Bayesian updating
+
+```{r}
+ggplot(data.frame(p = seq(0,1, length.out = 100)), aes(x=p))+
+  stat_function(fun = function(x) dbeta(x, 3,8), size=1.5, linetype=2)+
+  stat_function(fun = function(x) dbeta(x, 3,9), size=1.5, linetype=1)+
+  ggtitle("V H H V H H H H H H")+
+  labs(y="Plausibility",x="Proportion of vampires")+
+  ggpubr::theme_pubr()+
+  theme(axis.text.y = element_blank())
+```
+
+# Summary
+
+## Frequentist vs. Bayesian statistics: basics
+
+::: columns
+::: {.column width="50%"}
+**Frequentist**
+
+::: nonincremental
+-   parameters: fixed
+-   data: random
+-   probability = observed result from an infinite series of trials
+:::
+:::
+
+::: {.column width="50%"}
+**Bayesian**
+
+::: nonincremental
+-   parameters: fixed
+-   data: random
+-   probability = the researcher 'degree of belief'
+:::
+:::
+:::
+
+## Frequentist vs. Bayesian statistics: model summaries
+
+::: columns
+::: {.column width="50%"}
+**Frequentist**
+
+::: nonincremental
+-   results summarized with point estimates, standard errors, and confidence intervals
+:::
+:::
+
+::: {.column width="50%"}
+**Bayesian**
+
+::: nonincremental
+-   results summarized with posterior distribution (mean, median, SD) and its credible intervals, probabilities of direction
+:::
+:::
+:::
+
+## Frequentist vs. Bayesian statistics: hypothesis testing
+
+::: columns
+::: {.column width="50%"}
+**Frequentist**
+
+::: nonincremental
+-   NHST - deduction from the data given $H_0$, by setting $\alpha$ in advance; reject $H_0$ if $Pr(data | H_0) < \alpha$, not reject $H_0$ if $Pr(data | H_0) \geq \alpha$
+:::
+:::
+
+::: {.column width="50%"}
+**Bayesian**
+
+::: nonincremental
+-   Bayes factors, model comparison based on information criteria, tests of practical equivalence
+:::
+:::
+:::
+
+## Advantages and disadvantages of Bayesian statistics
+
+**Advantages**
+
+-   Natural approach to express uncertainty
+-   Ability to incorporate prior information
+-   Increased modeling flexibility
+-   Full posterior distribution of parameters
+-   Natural propagation of uncertainty
+
+**Disadvantages**
+
+-   Slow speed of model estimation
+
+## What you will be able to do?
+
+Fit a model:
+
+-   to a non-Normal data, possibly with outliers, categorical, count, ordered, censored, etc.
+-   with non-homogeneous variances
+-   account for measurement error
+-   account for missing data
+-   account for multi-level structure, auto-correlation, or spatial dependencies
+-   to a more than one outcome variable
+-   to variables that are mixtures of several distributions
+
+# Additional content
+
+## Software for Bayesian modeling
+
+-   Majority of contemporary software offer modules for Bayesian analysis
+    -   Stata, SAS, MPlus, SPSS/Amos, JASP
+-   WinBUGS/OpenBUGS - classical, but slightly outdated
+-   **R**
+    -   JAGS
+    -   **Stan**
+    -   **brms**
+-   Python - Pymc3
+-   Julia - Turing
+
+## Books on Bayesian analysis
+
+![](figures/stat_reth.jpg)
+
+## Books on Bayesian analysis
+
+![](figures/dbda2.jpg)
+
+## Books on Bayesian analysis
+
+![](figures/bda3.jpg)
+
+## Books on Bayesian analysis
+
+![](figures/gill.jpg)
+
+## Books on Bayesian analysis
+
+![](figures/bcm.jpg)
+
+## Online resources:
+
+-   A. Solomon Kurz online book with examples from Statistical rethinking translated into brms: [here](https://bookdown.org/connect/#/apps/1850/access)
+-   A. Solomon Kurz online book with examples from Andrew Hayes (mediation and moderation analysis) book translated into brms: [here](https://bookdown.org/connect/#/apps/1850/access)
+-   A. Solomon Kurz online book with examples from Kruscke book translated into brms: [here](https://github.com/ASKurz/Doing-Bayesian-Data-Analysis-in-brms-and-the-tidyverse)
+
+## Home assignment
+
+-   Read parts of chapter 2 in McElreath, "Statistical Rethinking" (pp. 19 - 41, without "Quadratic approximation")
+-   On page 47 you will find 2 practice tasks: 2M1 and 2M2. Prepare responses to this tasks.
+-   Send the solution as an .R file.
+-   **Deadline:** 2-Mar-23 12:00PM
