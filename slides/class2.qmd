@@ -1,0 +1,189 @@
+---
+title: "Bayesian Statistics in Social Sciences"
+format:
+  revealjs:
+    incremental: true
+editor: visual
+---
+
+## Bayesian inference
+
+-   data ($\mathcal{D}$)
+-   parameters ($\theta$)
+
+::: {.absolute top="40%" left="15%"}
+$$Pr(\theta| \mathcal{D}) = \frac{Pr(\mathcal{D} | \theta) \times Pr(\theta)}{\int Pr(\mathcal{D} | \theta) \times Pr(\theta) \mathrm{d}\theta}$$
+:::
+
+# How to obtain posterior distribution?
+
+## Posterior based on closed-form 
+
+```{r}
+library(tidyverse)
+```
+
+![](figures/integration_example.png)
+
+- but we have to deal with integration
+- and our flexibility is rather limited
+  - only relatively simple models
+  - only *conjugate* priors
+
+## Posterior based on approximation
+
+-  grid approximation
+-  quadratic approximation or other optimization
+-  Variational Bayesian methods
+
+## Posterior based on simulations
+
+```{r}
+tibble(x= seq(-4, 4, length.out=100)) %>% 
+  ggplot(aes(x))+
+  stat_function(fun = dnorm, geom="polygon", fill="blue", alpha=1/2)+
+    ggtitle("Normal distribution", subtitle = "based on known formula")+
+  theme_classic()
+```
+
+## Posterior based on simulations
+
+```{r}
+tibble(x= rnorm(10000, mean=0, sd=1)) %>% 
+  ggplot(aes(x))+
+  stat_function(fun = dnorm, geom="polygon", fill="blue", alpha=1/2)+
+  geom_histogram(colour="black", fill="blue", alpha=1/2)+
+    ggtitle("Normal distribution", subtitle = "based on 10000 simulations")+
+  theme_classic()
+```
+
+## Markov chain Monte Carlo
+
+- MCMC involves a number of algorithms based on a similar idea:
+  - Metropolis, Metropolis-Hastings, Gibbs
+  - Hamiltonian Monte Carlo, NUTS
+- Its aim is to sample from a complex and high-dimensional probability distribution...
+- By repeatedly generating a new sample from a proposal distribution, and accepting or rejecting it based on a certain acceptance probability
+
+
+## Markov chain Monte Carlo
+
+```{r}
+library(bayesplot)
+x <- example_mcmc_draws(1, 1)
+mcmc_trace(x)+
+  ggtitle("A traceplot of 250 draws from a posterior distribution")
+```
+
+## Markov chain Monte Carlo
+
+```{r}
+mcmc_hist(x)+
+  ggtitle("A histogram of 250 draws from a posterior distribution")
+```
+## Markov chain Monte Carlo
+
+```{r}
+mcmc_dens(x)+
+  ggtitle("A density plot of 250 draws from a posterior distribution")
+```
+
+# Describing posterior distribution
+
+## Centrality - mean
+
+```{r}
+mcmc_dens(x)+
+  geom_vline(xintercept = -21.06, colour="red")+
+  ggtitle("A density plot of 250 draws from a posterior distribution",
+          subtitle = "with the red line denoting posterior mean")
+```
+
+## Centrality - MAP estimate
+
+```{r}
+mcmc_dens(x)+
+  geom_vline(xintercept = -24.17, colour="green")+
+  ggtitle("A density plot of 250 draws from a posterior distribution",
+          subtitle = "with the green line denoting maximum a posteriori probability (MAP) estimate")
+```
+
+## Centrality - median
+
+```{r}
+mcmc_dens(x)+
+  geom_vline(xintercept = -22.14, colour="blue")+
+  ggtitle("A density plot of 250 draws from a posterior distribution",
+          subtitle = "with the green line denoting median")
+```
+## Uncertainty - credible intervals
+
+```{r}
+mcmc_dens(x)+
+  geom_polygon(data=tibble(Value=c(-46.58, 10.13, 10.13, -46.58), y=c(0,0,0.029,0.029)), aes(y=y), fill="yellow", alpha=1/3)+
+  ggtitle("A density plot of 250 draws from a posterior distribution",
+          subtitle = "with the yellow are denoting equal-tailed 95% credible interval [-46.58, 10.13]")
+```
+
+## Uncertainty - highest density intervals
+
+```{r}
+mcmc_dens(x)+
+  geom_polygon(data=tibble(Value=c(-46.70, 10.31, 10.31, -46.70), y=c(0,0,0.029,0.029)), aes(y=y), fill="cyan", alpha=1/3)+
+  ggtitle("A density plot of 250 draws from a posterior distribution",
+          subtitle = "with the cyan area denoting 95% highest density interval [-46.70, 10.31]")
+```
+
+## Uncertainty - highest density intervals
+
+```{r}
+mcmc_dens(rbind(x, x+100))+
+  geom_polygon(data=tibble(Value=c(-56.89950 , 15.1946, 15.1946, -56.89950), y=c(0,0,0.0104,0.0104)), aes(y=y), fill="cyan", alpha=1/3)+
+  geom_polygon(data=tibble(Value=c(42.59036 , 115.0449, 115.0449, 42.59036), y=c(0,0,0.0104,0.0104)), aes(y=y), fill="cyan", alpha=1/3)+
+  ggtitle("A density plot of 500 draws from a posterior distribution",
+          subtitle = "with the cyan areas denoting 95% highest density interval [-56.90, 15.19; 42.59, 115.05]")
+```
+
+## Existence - $P_{D}$
+
+```{r}
+library(bayestestR)
+p_direction(x) %>% 
+  plot()+
+  theme_classic()
+```
+- Probability of Direction: 0.93
+
+## Existence - $P_{D}$
+
+
+::: nonincremental
+
+-  pd <= 95%: uncertain
+-  pd > 95%: possibly existing
+-  pd > 97%: likely existing
+-  pd > 99%: probably existing
+-  pd > 99.9%: certainly existing
+
+:::
+
+## Significance - $ROPE$
+
+```{r}
+rope(x, range=c(-10,10)) %>% 
+  plot()+
+  theme_classic()
+```
+- Proportion of samples inside ROPE: 22.88%
+
+## Significance - $ROPE$
+
+::: nonincremental
+
+-  more than 99% in ROPE: negligible (we can accept the null hypothesis)
+-  more than 97.5% in ROPE: probably negligible
+-  <=97.5% & >= 2.5% in ROPE: undecided significance
+-  <2.5% in ROPE: probably significant
+-  <1% in ROPE: significant (we can reject the null hypothesis)
+
+:::

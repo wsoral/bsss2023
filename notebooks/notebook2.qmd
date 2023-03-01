@@ -1,0 +1,172 @@
+---
+title: "Class 2 notebook"
+format: html
+editor: visual
+---
+
+## Working with posterior objects
+
+Posterior objects are just arrays with some additional information included. Here, we load and print an example posterior object.
+Assume that this posterior describes effects of some experimental treatment (i.e., we want to know whether the treatment vs. control had any effect on DV). Numbers represent samples from the posterior distribution of the standardized difference.
+
+```{r}
+posterior <- readRDS("data_files/c2_posterior.rds")
+posterior
+```
+ 
+As you can see below posterior is just a long list of numbers.
+
+```{r}
+head(as.numeric(posterior), n = 100)
+```
+
+## Plotting posterior distribution
+
+There are many ways to plot posterior distribution. You can use basic plotting utilities or *ggplot2*. For convenience and consistency with future classes, we will use an R package *bayesplot*.
+
+Posterior can be plotted as a traceplot using a function `mcmc_trace`. Note that all plotting functions in *bayesplot* start with `mcmc_` and end with a plot type.
+
+```{r}
+library(bayesplot)
+mcmc_trace(posterior)
+```
+
+Another helpful plot is a histogram (`mcmc_hist`).
+
+```{r}
+mcmc_hist(posterior)
+```
+
+Finally, posterior can be plotted using a density plot.
+
+```{r}
+mcmc_dens(posterior)
+```
+
+## Point estimates
+
+Because posterior is just a list of numbers it can be easily summarised with any function that you use for descriptive statistics in R.
+For example, to obtain posterior mean, we simply write:
+
+```{r}
+mean(posterior)
+```
+
+Or to obtain median:
+
+```{r}
+median(posterior)
+```
+
+You can also use a *bayestestR* package to do this in a more convenient way.
+
+```{r}
+library(bayestestR)
+point_estimate(posterior)
+```
+
+## Uncertainty
+
+You could use `quantile` function to obtain 95% credible interval.
+
+```{r}
+quantile(posterior, probs = c(0.025, 0.975))
+```
+
+But you can also use a function `eti` from *bayestestR* for equal-tailed credible intervals.
+
+```{r}
+eti(posterior)
+```
+
+To obtain highest density intervals use a function `hdi` from *bayestestR*.
+
+```{r}
+hdi(posterior)
+```
+
+We can now see that there is some uncertainty with regards to the size of experimental treatment. We cannot entirely exclude that the effect is negative or very small.
+
+## Existence
+
+To do a more formal test of whether the effect exist, we can use `p_direction` from *bayestestR*. It tests what is the probability that the direction of the effect is consistent with the point estimate of the effect.
+
+```{r}
+p_direction(posterior)
+```
+
+It is possible that the effect exist.
+
+You can also plot the results.
+*as.numeric* is workaround used here because there is no model object in the namespace. Later, when we will fit models with *brms* it will not be necessary.
+
+```{r}
+plot(p_direction(as.numeric(posterior)))
+```
+
+## Significance
+
+Finally, we can test whether the effect is significant by testing to what extent the posterior overlaps with the region of practical equivalence.
+
+Because the DV was standardized, we can assume that differences smaller than |0.10| are negligible (i.e., very small values of Cohen's d).
+
+```{r}
+rope(posterior, range = c(-0.10, 0.10))
+```
+
+Here, we are uncertain whether we can or we cannot reject null hypothesis that the effect is within the range of (-0.10, 0.10).
+
+We can see it better using a plot.
+
+```{r}
+plot(rope(as.numeric(posterior), range = c(-0.10, 0.10)))
+```
+
+Another way to conduct analysis with this approach is by using a function `equivalence_test`.
+
+```{r}
+equivalence_test(posterior, range = c(-0.1, 0.1))
+```
+
+## Putting it all together.
+
+You can make everything faster with a function `describe_posterior`.
+
+```{r}
+describe_posterior(posterior)
+```
+
+Or you can use a function `sexit` which is an acronym for sequential effect existence and significance testing.
+
+Here, I used a threshold of |.1| to reflect effects that are significant (vs. negligible) and threashold of |.8| to reflect effects that are large.
+
+```{r}
+sexit(posterior, significant = 0.1, large = 0.8)
+```
+
+
+## Testing more refined hypotheses.
+
+You can also test more refined research hypotheses. 
+
+For example, what is chance that the effect is larger than 0.5?
+
+```{r}
+sum(posterior > 0.5) / length(posterior)
+```
+
+The same result can be obtained with `mean`
+
+```{r}
+mean(posterior > 0.5)
+```
+
+
+What is a chance the effect lies in an interval from 0.10 to 0.30?
+
+```{r}
+mean(posterior > 0.1 & posterior < 0.3)
+```
+
+More on that later...
+
