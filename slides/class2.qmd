@@ -181,7 +181,7 @@ rope(x, range=c(-10,10)) %>%
 ::: nonincremental
 
 -  more than 99% in ROPE: negligible (we can accept the null hypothesis)
--  more than 97.5% in ROPE: probably negligible
+-  less than 97.5% in ROPE: probably negligible
 -  <=97.5% & >= 2.5% in ROPE: undecided significance
 -  <2.5% in ROPE: probably significant
 -  <1% in ROPE: significant (we can reject the null hypothesis)
