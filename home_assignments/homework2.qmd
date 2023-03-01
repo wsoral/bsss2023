@@ -18,9 +18,7 @@ library(bayestestR)
 
 The dataset `ineq_women_pol` contains data from 31 countries about income inequalities (higher values = more inequality) and representation of women in politics (higher values = higher representation).
 
-1. Conduct a classic correlation analysis (e.g., using a function `cor.test`), and describe what conclusion would you draw based on this data.
-2. An object `post_cor` contains a posterior distribution from a Bayesian correlation analysis of the same dataset. Describe these results (point estimates and uncertainties) and conduct tests within a SEXIT (sequential effect existence and significance testing) framework.
-3. Compare conclusions from both analyses. In what aspects do they agree/disagree?
-4. Discuss what are pros and cons of both approaches.
-
-
+1.  Conduct a classic correlation analysis (e.g., using a function `cor.test`), and describe what conclusion would you draw based on this dataset.
+2.  An object `post_cor` contains a posterior distribution from a Bayesian correlation analysis of the same dataset. Describe these results (point estimates and uncertainties) and conduct tests within a SEXIT (sequential effect existence and significance testing) framework.
+3.  Compare conclusions from both analyses. In what aspects do they agree/disagree?
+4.  Discuss what are pros and cons of both approaches.
