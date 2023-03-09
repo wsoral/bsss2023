@@ -1,0 +1,350 @@
+---
+title: "Bayesian Statistics in Social Sciences"
+format:
+  revealjs:
+    incremental: true
+editor: visual
+---
+
+## Bayesian Workflow
+
+1. Pick an initial model
+2. Check whether priors make sense
+4. Fit the model
+5. Validate computation
+6. Evaluate and use the model
+7. Modify the model
+8. Compare models
+
+## Picking an initial model
+
+-  How alcohol affects reaction times (RT) in a flanker task? 
+-  The variable of interest is $\Delta RT$: change in reaction times (in seconds) after a dose of alcohol
+-  Perhaps then: $\Delta RT \sim Normal(\mu, \sigma)$
+
+## Picking an initial model
+
+$\Delta RT \sim Normal(\mu, \sigma)$
+
+```{r}
+library(tidyverse)
+rnorm(1000) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  geom_histogram(fill="lightblue",colour="black")+
+  labs(x=expression(Delta~"RT"))+
+  theme_classic()
+```
+
+
+## Picking an initial model
+
+$\Delta RT \sim Normal(\mu, \sigma)$
+
+$\mu \sim \ ...$
+
+$\sigma \sim \ ...$
+
+## Picking a prior distribution for $\mu$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dunif, colour="blue", args = list(min=-1000, max=1000), size=1.5)+
+  labs(x=expression(mu), y="")+
+  ggtitle("Uniform prior"~U(-infinity, +infinity))+
+  scale_x_continuous(limits = c(-15,15))+
+  scale_y_continuous(limits=c(0,0.03))+
+  theme_classic()
+```
+
+## Picking a prior distribution for $\mu$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dnorm, colour="blue", args = list(mean=0, sd=1), size=1.5)+
+  labs(x=expression(mu), y="")+
+  ggtitle("Normal prior"~N(0, 1))+
+  scale_x_continuous(limits = c(-15,15))+
+  theme_classic()
+```
+
+## Picking a prior distribution for $\mu$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dnorm, colour="blue", args = list(mean=1, sd=1), size=1.5)+
+  labs(x=expression(mu), y="")+
+  ggtitle("Normal prior"~N(1, 1))+
+  scale_x_continuous(limits = c(-15,15))+
+  theme_classic()
+```
+
+## Picking a prior distribution for $\mu$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dnorm, colour="blue", args = list(mean=0, sd=10), size=1.5)+
+  labs(x=expression(mu), y="")+
+  ggtitle("Normal prior"~N(0, 10))+
+  scale_x_continuous(limits = c(-15,15))+
+  theme_classic()
+```
+
+## Picking an initial model
+
+$\Delta RT \sim Normal(\mu, \sigma)$
+
+$\mu \sim \ Normal(0, 10)$
+
+$\sigma \sim \ ...$
+
+## Picking a prior distribution for $\sigma$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dunif, colour="blue", args = list(min=-1000, max=1000), size=1.5, xlim = c(0, 5))+
+  labs(x=expression(sigma), y="")+
+  ggtitle("Uniform prior"~U(0, +infinity))+
+  scale_x_continuous(limits = c(-2,5))+
+  scale_y_continuous(limits=c(0,0.03))+
+  theme_classic()
+```
+
+## Picking a prior distribution for $\sigma$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dnorm, colour="blue", args = list(mean=0, sd=1), size=1.5, xlim = c(0, 5))+
+  labs(x=expression(sigma), y="")+
+  ggtitle("Half-Normal prior"~Normal(0, 1))+
+  scale_x_continuous(limits = c(-2,5))+
+  theme_classic()
+```
+## Picking a prior distribution for $\sigma$
+
+```{r}
+rnorm(100, sd=20) %>% 
+  enframe() %>% 
+  ggplot(aes(x=value))+
+  stat_function(fun = dexp, colour="blue", args = list(rate=1), size=1.5, xlim = c(0, 5))+
+  labs(x=expression(sigma), y="")+
+  ggtitle("Exponential prior"~Exp(1))+
+  scale_x_continuous(limits = c(-2,5))+
+  theme_classic()
+```
+## Picking an initial model
+
+$\Delta RT \sim Normal(\mu, \sigma)$
+
+$\mu \sim \ Normal(0, 10)$
+
+$\sigma \sim \ Exponential(1)$
+
+
+## Prior predictive checks
+
+Prior for $\mu$: Normal(0, 10)
+Prior for $\sigma$: Exponential(1)
+
+```{r}
+library(brms)
+fit_prior_wrong <- readRDS("example_fit_prior_wrong.rds")
+set.seed(126)
+pp_check(fit_prior_wrong, draw_ids = sample(1:4000, size=40))
+```
+
+## Prior predictive checks
+
+Prior for $\mu$: Normal(0, 1)
+Prior for $\sigma$: Exponential(1)
+
+```{r}
+fit_prior <- readRDS("example_fit_prior.rds")
+set.seed(125)
+pp_check(fit_prior, draw_ids = sample(1:4000, size=40))
+```
+
+
+## Fitting the model
+
+```{.r}
+fit <- brm(
+  formula,
+  data,
+  family,
+  prior,
+  iter,
+  chains,
+  warmup
+)
+```
+
+## Fitting the model
+
+```{.r code-line-numbers="2-5"}
+fit <- brm(
+  formula,
+  data,
+  family,
+  prior,
+  iter,
+  chains,
+  warmup
+)
+```
+
+## Fitting the model
+
+```{.r code-line-numbers="6-8"}
+fit <- brm(
+  formula,
+  data,
+  family,
+  prior,
+  iter,
+  chains,
+  warmup
+)
+```
+
+
+## Fitting the model
+
+- `iter` - set number of iterations in MCMC algorithm, higher values allow better precision, but also take more time; default value: 2000
+- `chains` - set number of simulation runs, should be at least 2; default value: 4
+- `warmup` - set number of initial simulations to discard; default value: `iter`/2
+- Total number of draws = (`iter` - `warmup`) $\times$ `chains`; default: ?
+
+## Validate computation
+
+```{r}
+library(bayesplot)
+x <- example_mcmc_draws(1, 1)
+mcmc_trace(x)
+```
+
+
+## Validate computation
+
+```{r}
+x <- example_mcmc_draws(4, 1)
+mcmc_trace(x)
+```
+
+## Validate computation
+
+
+- One way to check whether the MCMC simulations converged is to compare between-chain and within-chain estimates of the model.
+- $\hat{R}$ (read: r hat, also PSRF: potential scale reduction factor) larger than 1 indicates serious problems with simulations; such model should not be further analyzed
+- Usually $\hat{R}$ smaller than 1.05 is considered good, values larger than 1.1 indicate non-convergence
+
+
+## Validate computation
+
+```{r}
+x <- example_mcmc_draws(4, 1)
+mcmc_acf(x)
+```
+
+## Validate computation
+
+- Large autocorrelations (i.e., correlations of a draw with previous draws) may indicate problems with convergence
+- Larget autocorrelations will reduce the number of independent samples from posterior distribution (so called effective sample size, ESS)
+- ESS should be as high as possible; probably around 1000 is required to obtain robust 95% CIs
+- The ratio of ESS to total number of draw should not be lower than 0.1
+
+
+## Model evaluation
+
+Posterior predictive checks
+
+```{r}
+fit <- readRDS("example_fit.rds")
+pp_check(fit)
+```
+
+## Model evaluation
+
+Sensitivity to prior
+
+- Gelman suggests checking if the SD of the posterior is more than 0.1 times the SD of the prior
+  - If no, the prior is considered uninformative: should not favor any specific parameter values
+  - If yes, the prior is considered informative: may favor a specific range of parameter values
+- If the prior is informative it can make sense to think harder about it (i.e., to what extent it can be justified)
+
+
+## Model use
+
+```{r}
+mcmc_intervals(fit, pars=c("b_Intercept", "sigma"))
+```
+
+## Model use
+
+```{r}
+library(bayestestR)
+equivalence_test(fit, range = c(-0.25, 0.25)) %>% 
+  plot()+
+  theme_classic()
+```
+
+## Choosing a different family
+
+Normal distribution vs. Student distribution (with $\nu = 3$).
+
+```{r}
+rnorm(10000) %>% 
+  enframe() %>%
+  mutate(rt = rt(10000, 3)) %>% 
+  ggplot()+
+  geom_histogram(aes(x=value),fill="lightblue",colour="black", alpha=1/3, bins=60)+
+  geom_histogram(aes(x=rt),fill="red",colour="black", alpha=1/3, bins=60)+
+  labs(x=expression(Delta~"RT"))+
+  scale_x_continuous(limits=c(-4,4))+
+  theme_classic()
+```
+
+
+## Model comparison - Bayes factor {.smaller}
+
+- Bayes Factor (BF) indicates the relative strength of evidence in the data for two competing theories/models/hypotheses 
+  - Example: Alternative hypothesis ($H_1$) vs. Null hypothesis ($H_0$)
+- $BF$ ranges from 0 to $+\infty$
+- $BF_{10}$ to indicate how much more likely the alternative hypothesis compared to the null hypothesis
+- Values $> 1$ support the alternative hypothesis, whereas values $< 1$ support the null hypothesis 
+- $BF_{01}$ to indicate how much more likely the null hypothesis compared to the alternative hypothesis
+- $BF_{01} = 1/BF_{10}$
+
+
+## Model comparison - Bayes factor {.smaller}
+
+
+|       | BF    |       | Interpretation                  |
+|-------|-------|-------|---------------------------------|
+| 100   |   <   |       | Extreme evidence for $H_1$      |
+|  30   |   -   |  100  | Very strong evidence for $H_1$  |
+|  10   |   -   |  30   | Strong evidence for $H_1$       |
+|  3    |   -   |  10   | Substantial evidence for $H_1$  |
+|  1    |   -   |  3    | Anecdotal evidence for $H_1$    |
+|       |   1   |       | No evidence                     |
+|  1/3  |   -   |  1    | Anecdotal evidence for $H_0$    |
+|  1/10 |   -   |  1/3  | Substantial evidence for $H_0$  |
+|  1/30 |   -   |  1/10 | Strong evidence for $H_0$       |
+|  1/100|   -   |  1/30 | Very strong evidence for $H_0$  |
+|       |   >   |  1/100| Extreme evidence for $H_0$      |
+
+
+
+

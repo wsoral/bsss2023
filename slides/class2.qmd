@@ -17,7 +17,7 @@ $$Pr(\theta| \mathcal{D}) = \frac{Pr(\mathcal{D} | \theta) \times Pr(\theta)}{\i
 
 # How to obtain posterior distribution?
 
-## Posterior based on closed-form 
+## Posterior based on closed-form
 
 ```{r}
 library(tidyverse)
@@ -25,16 +25,16 @@ library(tidyverse)
 
 ![](figures/integration_example.png)
 
-- but we have to deal with integration
-- and our flexibility is rather limited
-  - only relatively simple models
-  - only *conjugate* priors
+-   but we have to deal with integration
+-   and our flexibility is rather limited
+    -   only relatively simple models
+    -   only *conjugate* priors
 
 ## Posterior based on approximation
 
--  grid approximation
--  quadratic approximation or other optimization
--  Variational Bayesian methods
+-   grid approximation
+-   quadratic approximation or other optimization
+-   Variational Bayesian methods
 
 ## Posterior based on simulations
 
@@ -59,12 +59,11 @@ tibble(x= rnorm(10000, mean=0, sd=1)) %>%
 
 ## Markov chain Monte Carlo
 
-- MCMC involves a number of algorithms based on a similar idea:
-  - Metropolis, Metropolis-Hastings, Gibbs
-  - Hamiltonian Monte Carlo, NUTS
-- Its aim is to sample from a complex and high-dimensional probability distribution...
-- By repeatedly generating a new sample from a proposal distribution, and accepting or rejecting it based on a certain acceptance probability
-
+-   MCMC involves a number of algorithms based on a similar idea:
+    -   Metropolis, Metropolis-Hastings, Gibbs
+    -   Hamiltonian Monte Carlo, NUTS
+-   Its aim is to sample from a complex and high-dimensional probability distribution...
+-   By repeatedly generating a new sample from a proposal distribution, and accepting or rejecting it based on a certain acceptance probability
 
 ## Markov chain Monte Carlo
 
@@ -81,6 +80,7 @@ mcmc_trace(x)+
 mcmc_hist(x)+
   ggtitle("A histogram of 250 draws from a posterior distribution")
 ```
+
 ## Markov chain Monte Carlo
 
 ```{r}
@@ -116,6 +116,7 @@ mcmc_dens(x)+
   ggtitle("A density plot of 250 draws from a posterior distribution",
           subtitle = "with the green line denoting median")
 ```
+
 ## Uncertainty - credible intervals
 
 ```{r}
@@ -152,19 +153,17 @@ p_direction(x) %>%
   plot()+
   theme_classic()
 ```
-- Probability of Direction: 0.93
+
+-   Probability of Direction: 0.93
 
 ## Existence - $P_{D}$
 
-
 ::: nonincremental
-
--  pd <= 95%: uncertain
--  pd > 95%: possibly existing
--  pd > 97%: likely existing
--  pd > 99%: probably existing
--  pd > 99.9%: certainly existing
-
+-   pd \<= 95%: uncertain
+-   pd \> 95%: possibly existing
+-   pd \> 97%: likely existing
+-   pd \> 99%: probably existing
+-   pd \> 99.9%: certainly existing
 :::
 
 ## Significance - $ROPE$
@@ -174,16 +173,15 @@ rope(x, range=c(-10,10)) %>%
   plot()+
   theme_classic()
 ```
-- Proportion of samples inside ROPE: 22.88%
+
+-   Proportion of samples inside ROPE: 22.88%
 
 ## Significance - $ROPE$
 
 ::: nonincremental
-
--  more than 99% in ROPE: negligible (we can accept the null hypothesis)
--  less than 97.5% in ROPE: probably negligible
--  <=97.5% & >= 2.5% in ROPE: undecided significance
--  <2.5% in ROPE: probably significant
--  <1% in ROPE: significant (we can reject the null hypothesis)
-
+-   more than 99% in ROPE: negligible (we can accept the null hypothesis)
+-   less than 97.5% in ROPE: probably negligible
+-   \<=97.5% & \>= 2.5% in ROPE: undecided significance
+-   \<2.5% in ROPE: probably significant
+-   \<1% in ROPE: significant (we can reject the null hypothesis)
 :::

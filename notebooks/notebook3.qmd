@@ -1,0 +1,215 @@
+---
+title: "Class 3 notebook"
+format: html
+editor: visual
+---
+
+Let's start with loading the required packages.
+
+```{r}
+library(brms)
+library(bayesplot)
+library(bayestestR)
+```
+
+
+Let's load the dataset and visualize the first 5 rows.
+
+```{r}
+load("data_files/alcoholRT.R")
+head(df)
+```
+
+Let's look at the histogram of the values. 
+
+```{r}
+hist(df$deltaRT, main = "Histogram of delta RT", xlab = "delta RT")
+```
+
+# Define model and priors
+
+The formula for our basic model is:
+
+```
+y ~ 1
+```
+This way of defining formula is based on the regression framework, where a model without any predictor and just an intercept is the model for the unconditioned mean of the outcome variable.
+
+In `brms` we will could also write:
+
+```
+y ~ 0 + Intercept
+```
+
+This allows to define priors on the real Intercept (mean of the DV).
+
+With formula in hand, you can take a look at the default prior distributions in `brms`.
+
+```{r}
+get_prior(formula = deltaRT ~ 0 + Intercept,
+          data = df,
+          family = gaussian)
+```
+
+Lets create prior object. Use `set_prior` to set priors. Use `c()` to concatenate priors for different parameters. 
+
+```{r}
+priors <- c(
+  set_prior("normal(0, 1)", class="b", coef="Intercept"),
+  set_prior("exponential(1)", class="sigma")
+)
+```
+
+Now lets fit the model with prior samples only to verify that our prior choice is reasonable.
+
+```{r}
+fit_prior <- brm(formula = deltaRT ~ 0 + Intercept,
+                 data = df,
+                 family = gaussian,
+                 prior = priors,
+                 sample_prior = "only")
+```
+
+Use `pp_check` with `fit_prior` to conduct prior predictive checks.
+
+```{r}
+pp_check(fit_prior, ndraws=20)
+```
+
+## Fit the model
+
+Now lets fit our first model. Note that there is no need to define number of iterations number of draws, or warmup period. We can use the default values. 
+
+```{r}
+fit1 <- brm(formula = deltaRT ~ 0 + Intercept,
+            data = df,
+            family = gaussian,
+            prior = priors)
+```
+
+
+## Validate computation.
+
+Lets start with traceplots.
+
+```{r}
+mcmc_trace(fit1)
+```
+
+
+See also autocorrelation plots.
+
+```{r}
+mcmc_acf(fit_prior)
+```
+
+Lets diagnose whether the computations are trustworthy.
+
+```{r}
+diagnostic_posterior(fit1, component = "all")
+```
+
+Additionally, we can check the ratio of the ESS to the total number of draws.
+
+```{r}
+neff_ratio(fit1)
+```
+
+## Evaluate the model
+
+Let's start model evaluation with graphical posterior predictive checks.
+
+```{r}
+pp_check(fit1, ndraws=30)
+```
+
+Let's also check whether the prior we chosen are informative.
+
+```{r}
+check_prior(fit1, component = "all")
+```
+
+
+Finally, lets print the model
+
+```{r}
+fit1
+```
+
+You can also plot it. For example:
+
+```{r}
+mcmc_intervals(fit1, pars = c("b_Intercept", "sigma"))
+```
+
+Or use with functions from the `bayestestR` package.
+
+For example, we can use `equivalence_test` with the fitted model object. No need to extract posterior values.
+
+```{r}
+equivalence_test(fit1, range = c(-0.25, 0.25))
+```
+
+We can also plot the equivalence test results.
+
+```{r}
+plot(equivalence_test(fit1, range = c(-0.25, 0.25)))
+```
+
+
+## Choosing a different family
+
+Before fitting another model it is always good to look at parameters and default priors.
+
+```{r}
+get_prior(formula = deltaRT ~ 0 + Intercept,
+            data = df,
+            family = student)
+```
+
+How does Gamma prior distribution look like?
+
+```{r}
+curve(dgamma(x, 2, 0.01), from = 1, to=120)
+```
+
+
+```{r}
+fit2 <- brm(formula = deltaRT ~ 0 + Intercept,
+            data = df,
+            family = student,
+            prior = priors)
+```
+
+
+How would you check whether computations for the second model are valid?
+
+```{r}
+
+```
+
+How would you conduct posterior predictive checks?
+
+```{r}
+
+```
+
+
+## Model comparisons
+
+Let's compare both models with `bayesfactor_models`
+
+```{r}
+bayesfactor_models(fit1, 
+                   fit2, 
+                   denominator = 1)
+```
+
+
+Let's print the final model
+
+```{r}
+fit2
+```
+
+
