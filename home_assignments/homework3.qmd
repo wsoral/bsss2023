@@ -1,0 +1,83 @@
+---
+title: "Homework 3"
+format: html
+editor: visual
+---
+
+## Intro
+
+Load the required packages
+
+```{r}
+
+```
+
+Load the dataset (remember to set working directory to the source file location).
+
+```{r}
+raven <- readRDS("data/raven.rds")
+```
+
+This (fake) dataset contains data on IQ from a sample of students after some cognitive training.
+
+Your task is to assess whether there is any evidence for the post-training improvement.
+
+Follow, the workflow that was presented during the class.
+
+## Choose an initial model
+
+Probably Gaussian/Normal is the best place to start.
+
+## Set priors
+
+Recall what you know about the IQ scale: - Its mean is 100. In samples, we should usually observe values from 90 to 110. Which values of Normal prior distribution would you thus choose?
+
+You can use the code below to visualize the values. Try changing prior parameters (`mean` and `sd`). You will also need to adjust minimum and maximum value on the x-axis using `from` and `to`.
+
+```{r}
+curve(dnorm(x, mean=0, sd=1), from=-4, to=4)
+```
+
+-   Its standard deviation is 15. If you would like to use exponential distribution for the prior of sigma you should set its parameter (rate) value to 1/15.0 (because the mean of the exponential distribution 1/rate, thus rate is 1/mean). Remember, about the decimal part when copy-pasting the value.
+
+## Conduct prior predictive checks
+
+Describe whether the chosen prior distributions make sense. You might want to run the `pp_check` function several times, because, by default, each time a new sample of prior predicitons is drawn.
+
+## Fit the model
+
+Save the model to the object `fit1`.
+
+## Validate computations.
+
+Describe whether it is safe to draw conclusions from the simulations.
+
+## Evaluate the model.
+
+Conduct posterior predictive checks and check prior sensitivity.
+
+## Use the model
+
+To check whether the sample mean is larger than 100, you can use this function.
+
+```{r}
+hypothesis(fit1, "Intercept > 100")
+```
+
+Value in the column 'Post.Prob' is probability of the mean being higher than 100. Value in the column 'Evid.Ratio' is Bayes factor in support for the hypothesis that the sample IQ is larger than 100, compared to the hypothesis that it is smaller than 100.
+
+To check whether the training had some practical significance, you can use this function (you choose different values of ROPE, if you want to).
+
+```{r}
+equivalence_test(fit1, range = c(-97, 103))
+```
+
+Describe the conclusions.
+
+## Modify the model
+
+Try using a different model: Student or Normal distribution for likelihood (depending on which one you chose as an initial model). Save the model as `fit2`. I will assume that you conducted all validation checks, so you don't need to report them here.
+
+## Compare model
+
+Compare the two models using Bayes factor.
