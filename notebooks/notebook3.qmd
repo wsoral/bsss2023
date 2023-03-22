@@ -12,7 +12,6 @@ library(bayesplot)
 library(bayestestR)
 ```
 
-
 Let's load the dataset and visualize the first 5 rows.
 
 ```{r}
@@ -20,7 +19,7 @@ load("data_files/alcoholRT.R")
 head(df)
 ```
 
-Let's look at the histogram of the values. 
+Let's look at the histogram of the values.
 
 ```{r}
 hist(df$deltaRT, main = "Histogram of delta RT", xlab = "delta RT")
@@ -30,14 +29,15 @@ hist(df$deltaRT, main = "Histogram of delta RT", xlab = "delta RT")
 
 The formula for our basic model is:
 
-```
+```         
 y ~ 1
 ```
+
 This way of defining formula is based on the regression framework, where a model without any predictor and just an intercept is the model for the unconditioned mean of the outcome variable.
 
 In `brms` we will could also write:
 
-```
+```         
 y ~ 0 + Intercept
 ```
 
@@ -51,7 +51,7 @@ get_prior(formula = deltaRT ~ 0 + Intercept,
           family = gaussian)
 ```
 
-Lets create prior object. Use `set_prior` to set priors. Use `c()` to concatenate priors for different parameters. 
+Lets create prior object. Use `set_prior` to set priors. Use `c()` to concatenate priors for different parameters.
 
 ```{r}
 priors <- c(
@@ -78,7 +78,7 @@ pp_check(fit_prior, ndraws=20)
 
 ## Fit the model
 
-Now lets fit our first model. Note that there is no need to define number of iterations number of draws, or warmup period. We can use the default values. 
+Now lets fit our first model. Note that there is no need to define number of iterations number of draws, or warmup period. We can use the default values.
 
 ```{r}
 fit1 <- brm(formula = deltaRT ~ 0 + Intercept,
@@ -87,7 +87,6 @@ fit1 <- brm(formula = deltaRT ~ 0 + Intercept,
             prior = priors)
 ```
 
-
 ## Validate computation.
 
 Lets start with traceplots.
@@ -95,7 +94,6 @@ Lets start with traceplots.
 ```{r}
 mcmc_trace(fit1)
 ```
-
 
 See also autocorrelation plots.
 
@@ -129,7 +127,6 @@ Let's also check whether the prior we chosen are informative.
 check_prior(fit1, component = "all")
 ```
 
-
 Finally, lets print the model
 
 ```{r}
@@ -156,7 +153,6 @@ We can also plot the equivalence test results.
 plot(equivalence_test(fit1, range = c(-0.25, 0.25)))
 ```
 
-
 ## Choosing a different family
 
 Before fitting another model it is always good to look at parameters and default priors.
@@ -173,14 +169,12 @@ How does Gamma prior distribution look like?
 curve(dgamma(x, 2, 0.01), from = 1, to=120)
 ```
 
-
 ```{r}
 fit2 <- brm(formula = deltaRT ~ 0 + Intercept,
             data = df,
             family = student,
             prior = priors)
 ```
-
 
 How would you check whether computations for the second model are valid?
 
@@ -194,7 +188,6 @@ How would you conduct posterior predictive checks?
 
 ```
 
-
 ## Model comparisons
 
 Let's compare both models with `bayesfactor_models`
@@ -205,11 +198,8 @@ bayesfactor_models(fit1,
                    denominator = 1)
 ```
 
-
 Let's print the final model
 
 ```{r}
 fit2
 ```
-
-
