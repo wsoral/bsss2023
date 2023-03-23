@@ -6,8 +6,7 @@ editor: visual
 
 ## Load libraries and data
 
-Load the required libraries. We will use `ggplot2` for plotting functions. You don't have to install it, it was be installed with `brms`.
-I don't like the default theme in `ggplot2`, so I will set the theme to `theme_classic`
+Load the required libraries. We will use `ggplot2` for plotting functions. You don't have to install it, it was be installed with `brms`. I don't like the default theme in `ggplot2`, so I will set the theme to `theme_classic`
 
 ```{r}
 library(brms)
@@ -16,28 +15,16 @@ library(ggplot2)
 theme_set(theme_classic())
 ```
 
-
-We will load a dataset. This data are the results of an experiment which tested how arousing control motivation affect vaccination intentions.
-- cond - experimental condition: 
-  - Base = baseline condition (participants read a vignette about benefits)
-  - Rest = control restoration condition (participants read a vignette about how vaccines can allow people for control restoration)
-- vaccination - intentions to vaccinate against several diseases
-- gender - participant's gender
-- age - participant's age
-- place - place of living (rural vs. urban)
+We will load a dataset. This data are the results of an experiment which tested how arousing control motivation affect vaccination intentions. - cond - experimental condition: - Base = baseline condition (participants read a vignette about benefits) - Rest = control restoration condition (participants read a vignette about how vaccines can allow people for control restoration) - vaccination - intentions to vaccinate against several diseases - gender - participant's gender - age - participant's age - place - place of living (rural vs. urban)
 
 ```{r}
 vacc <- read.csv2("data_files/exp_vaccines.csv")
 vacc
 ```
 
-
 ## Comparing two groups
 
-First, it is always good to look at the distribution of outcome variable across conditions.
-Violin plots will give us density for both conditions.
-Boxplots will show us different quantiles of the distributions.
-Notches of the boxplots, are similar to 95% CIs. Non-overlap suggests that the two medians differ.
+First, it is always good to look at the distribution of outcome variable across conditions. Violin plots will give us density for both conditions. Boxplots will show us different quantiles of the distributions. Notches of the boxplots, are similar to 95% CIs. Non-overlap suggests that the two medians differ.
 
 ```{r}
 ggplot(data = vacc,
@@ -46,7 +33,6 @@ ggplot(data = vacc,
   geom_violin()+
   geom_boxplot(notch = TRUE, width=0.4)
 ```
-
 
 ### Simple approach
 
@@ -58,13 +44,11 @@ my_scale <- function(x){
 }
 ```
 
-
 Standardize the outcome variable (vaccination intentions).
 
 ```{r}
 vacc$z_vacc <- my_scale(vacc$vaccination)
 ```
-
 
 Let's fit the model where vaccination intentions are regressed on a dummy variable denoting experimental condition (0 = baseline, 1 = control restoration).
 
@@ -85,8 +69,7 @@ priors1 <- c(
 )
 ```
 
-Let's fit the model with `brm`. In most cases, I recommend setting `sample_prior` to TRUE. 
-This will give us additional options later.
+Let's fit the model with `brm`. In most cases, I recommend setting `sample_prior` to TRUE. This will give us additional options later.
 
 ```{r}
 fit1 <- brm(
@@ -97,8 +80,7 @@ fit1 <- brm(
 )
 ```
 
-Let's see the results.
-**Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+Let's see the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
 
 ```{r}
 fit1
@@ -110,12 +92,9 @@ Let's test the hypothesis that the difference between conditions is 0.
 hypothesis(fit1, "condRest = 0")
 ```
 
-
 ### Kruschke's approach (BEST = Bayesian estimation supersedes t-test)
 
-If we get rid of the intercept (in formula 0 instead of 1), we can explicitly estimate means in both conditions.
-We model not only means ($\mu$) but also residual standard deviation ($\sigma$) as dependent on experimental condition.
-We will use `bf` function to link together several formulas.
+If we get rid of the intercept (in formula 0 instead of 1), we can explicitly estimate means in both conditions. We model not only means ($\mu$) but also residual standard deviation ($\sigma$) as dependent on experimental condition. We will use `bf` function to link together several formulas.
 
 ```{r}
 fit2_formula <- bf(vaccination ~ 0 + cond,
@@ -123,6 +102,7 @@ fit2_formula <- bf(vaccination ~ 0 + cond,
 ```
 
 Let's try to understand how this model looks like in `brms`:
+
 ```{r}
 get_prior(
   formula = fit2_formula,
@@ -131,13 +111,11 @@ get_prior(
 )
 ```
 
-Kruschke suggests to set prior for group means ($\mu$) to Normal distribution with mean equal to sample mean and standard deviation equal to sample SD x 100.
-Moreover, he suggests to set prior for group standard deviations (dpar=distributional parameter, $\sigma$) to HalNormal distribution with mean equal to 0 and standard deviation equalt sample SD. Because in brms $\sigma$ is always used on a log-scale, we need to input logged sample SD.
-Finally, he suggests to set prior for degrees of freedom ($\nu$) of the Student distribution of groups' results to Exponential with rate parameters set to 1/29.
-
+Kruschke suggests to set prior for group means ($\mu$) to Normal distribution with mean equal to sample mean and standard deviation equal to sample SD x 100. Moreover, he suggests to set prior for group standard deviations (dpar=distributional parameter, $\sigma$) to HalNormal distribution with mean equal to 0 and standard deviation equalt sample SD. Because in brms $\sigma$ is always used on a log-scale, we need to input logged sample SD. Finally, he suggests to set prior for degrees of freedom ($\nu$) of the Student distribution of groups' results to Exponential with rate parameters set to 1/29.
 
 The template for prior definition is:
-```
+
+```         
 c(prior(normal(mean_y, sd_y * 100), class = b),
   prior(normal(0, log(sd_y)), class = b, dpar = sigma),
   prior(exponential(one_over_twentynine), class = nu))
@@ -146,21 +124,25 @@ c(prior(normal(mean_y, sd_y * 100), class = b),
 There are more elegant ways coding this prior, but for the sake of simplity, we will simply compute each hyperparameter value and put it into our code.
 
 Sample mean
+
 ```{r}
 mean(vacc$vaccination)
 ```
 
-Sample SD * 100
+Sample SD \* 100
+
 ```{r}
 sd(vacc$vaccination) * 100
 ```
 
 Logged sample SD.
+
 ```{r}
 log(sd(vacc$vaccination))
 ```
 
 Rate of the Exponential prior
+
 ```{r}
 1/29
 ```
@@ -184,8 +166,8 @@ fit2 <- brm(
 )
 ```
 
-Let's see the results.
-**Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+Let's see the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
 ```{r}
 fit2
 ```
@@ -201,31 +183,31 @@ To get the value of the effect size (Cohen's d), we need to divide the differenc
 
 $$
 \sigma_{p} = \sqrt{\frac{\sigma^2_1 + \sigma^2_2}{2}}
-$$
-Because $\sigma$ is on a log-scale, we need to transform it back to linear scale, with an `exp` function.
+$$ Because $\sigma$ is on a log-scale, we need to transform it back to linear scale, with an `exp` function.
+
 ```{r}
 effect_size <- hypothesis(fit2, "(condRest - condBase)/sqrt((exp(sigma_condRest)^2 + exp(sigma_condBase)^2)/2) = 0")
 effect_size
 ```
 
 You can get the posterior sample for both the difference and the effect size, but using the socket called `samples`. You can use this object with `p_direction`...
+
 ```{r}
 p_direction(effect_size$samples)
 ```
 
 ... or `equivalence_test`
+
 ```{r}
 equivalence_test(effect_size$samples)
 ```
-
 
 ## Simple linear regression
 
 ### Simple approach
 
-Always plot results before running any linear regression. 
-If you have more than several hundred of observations, you may want to use `geom_jitter` instead of `geom_point`.
-Use `geom_smooth` to check whether it can be safely assumed that the relationship between an outcome variable and it's predictor is linear.
+Always plot results before running any linear regression. If you have more than several hundred of observations, you may want to use `geom_jitter` instead of `geom_point`. Use `geom_smooth` to check whether it can be safely assumed that the relationship between an outcome variable and it's predictor is linear.
+
 ```{r}
 ggplot(data = vacc,
        mapping = aes(x = age, y = vaccination)) +
@@ -235,11 +217,13 @@ ggplot(data = vacc,
 ```
 
 Standardize the predictor.
+
 ```{r}
 vacc$zAge <- my_scale(vacc$age)
 ```
 
 Let's try to understand how the model is implemented in `brms`.
+
 ```{r}
 get_prior(
   formula = z_vacc ~ zAge,
@@ -256,6 +240,7 @@ priors3 <- c(
 ```
 
 Let's fit the model with `brm`.
+
 ```{r}
 fit3 <- brm(
   formula = z_vacc ~ zAge,
@@ -265,29 +250,33 @@ fit3 <- brm(
 )
 ```
 
-Let's see the results.
-**Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+Let's see the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
 ```{r}
 fit3
 ```
 
 Let's check whether slope/correlation is different from 0.
+
 ```{r}
 slope <- hypothesis(fit3, "zAge = 0")
 slope
 ```
 
 What is the probability of the corelation being positive?
+
 ```{r}
 p_direction(slope$samples)
 ```
 
 Is this correlation of practical significance?
+
 ```{r}
 equivalence_test(slope$samples)
 ```
 
 Let's plot the model's effects using `conditional_effects`.
+
 ```{r}
 conditional_effects(x = fit3, 
                     effects = "zAge")
@@ -314,7 +303,6 @@ plot(
 )
 ```
 
-
 ### Robust regression
 
 If we want to conduct a regression analysis robust to outliers, we may use Student likelihood instead of the Normal likelihood. Let's understand how this model is implemented in `brms`.
@@ -327,11 +315,7 @@ get_prior(
 )
 ```
 
-Following Kruschke's recommendations, we will set:
-- prior for the intercept to Normal(0, 10)
-- prior for the slope to Normal(0, 10)
-- prior for residual standard deviation to HalfNormal(0, 1)
-- prior for degrees of freedom of the Student likelihood to Exponential(1/29)
+Following Kruschke's recommendations, we will set: - prior for the intercept to Normal(0, 10) - prior for the slope to Normal(0, 10) - prior for residual standard deviation to HalfNormal(0, 1) - prior for degrees of freedom of the Student likelihood to Exponential(1/29)
 
 ```{r}
 priors4 <- c(prior(normal(0, 10), class = Intercept),
@@ -352,13 +336,14 @@ fit4 <- brm(
 )
 ```
 
-Let's see the results.
-**Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+Let's see the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
 ```{r}
 fit4
 ```
 
 Plot the results for the robust model.
+
 ```{r}
 plot(
   conditional_effects(x = fit4,
@@ -373,10 +358,7 @@ plot(
 
 So far, we assumed that the relationship between the vaccination intentions and age can be modeled as a straight line. But perhaps you would like to test a curvilinear relationship?
 
-Let's see how this model would look like in `brms`.
-We will use the `poly` function to create polynomial terms of a second degree.
-The first term 'polyzAge21' is a slope of the regression line at the value of x (i.e., zAge) equal to 0.
-The second term 'polyzAge22' is the quadratic term. Positive values indicate U-shape. Negative values indicate inverted U-shape.
+Let's see how this model would look like in `brms`. We will use the `poly` function to create polynomial terms of a second degree. The first term 'polyzAge21' is a slope of the regression line at the value of x (i.e., zAge) equal to 0. The second term 'polyzAge22' is the quadratic term. Positive values indicate U-shape. Negative values indicate inverted U-shape.
 
 ```{r}
 get_prior(
@@ -387,6 +369,7 @@ get_prior(
 ```
 
 Let's use similar priors as with `fit4`.
+
 ```{r}
 priors5 <- c(prior(normal(0, 10), class = Intercept),
             prior(normal(0, 10), class = b),
@@ -395,6 +378,7 @@ priors5 <- c(prior(normal(0, 10), class = Intercept),
 ```
 
 Let's fit the model with `brm`.
+
 ```{r}
 fit5 <- brm(
   formula = z_vacc ~ poly(zAge, 2),
@@ -405,8 +389,8 @@ fit5 <- brm(
 )
 ```
 
-Let's see the results.
-**Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+Let's see the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
 ```{r}
 fit5
 ```
@@ -425,17 +409,18 @@ plot(
 
 ## Comparing models using $R^2$
 
-But the model results and it's graphical presentation speak against the hypothesis of the quadratic relationship.
-However, which of the model explains the outcome variable better.
+But the model results and it's graphical presentation speak against the hypothesis of the quadratic relationship. However, which of the model explains the outcome variable better.
 
 Let's use bayesian version of R-squared.
 
 For a linear model:
+
 ```{r}
 bayes_R2(fit4)
 ```
 
 For a quadratic model:
+
 ```{r}
 bayes_R2(fit5)
 ```
@@ -444,22 +429,24 @@ bayes_R2(fit5)
 
 We can use information criteria to account for the model complexity and overfitting.
 
-
 Let's compute LOO (leave-one-out) information criterion for the linear model.
 
 ```{r}
 loo4 <- loo(fit4)
 loo4
 ```
+
 Let's compute LOO (leave-one-out) information criterion for quadratic model.
 
 ```{r}
 loo5 <- loo(fit5)
 loo5
 ```
+
 The model with higher elpd_loo (or lower looic) should be preferred, as one with better out-of-sample predictive qualities.
 
 We can compare both IC with `loo_compare`.
+
 ```{r}
 loo_compare(loo4, loo5)
 ```

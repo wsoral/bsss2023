@@ -1,0 +1,32 @@
+---
+title: "Homework 4"
+format: html
+editor: visual
+---
+
+## Load the the libraries
+
+```{r}
+library(brms)
+library(bayestestR)
+```
+
+## Load the data
+
+Set the working directory to source file location and load the data with this command.
+
+```{r}
+vacc <- read.csv2("../notebooks/data_files/exp_vaccines.csv")
+head(vacc)
+```
+
+Your task is to find a model that would be the most accurate in predicting vaccination intentions.
+
+-   Use only demographic variables (gender, age, place). Try every combination of these variables (there are 8 combinations in total).
+-   Recall that to include more than on predictor in a regression you should separate them with `+` sign, e.g., `ov ~ pred1 + pred2 + pred3`
+-   Use a simple approach to regression (with a Normal likelihood, a Normal prior on regression coefficients, and treatment/dummy coding of categorical variables).
+-   Remember that you should standardize continuous variables.
+-   Choose a model that has the best out-of-sample predictive accuracy.
+-   Describe the best model results, and conduct tests on it using a SEXIT framework.
+
+**If you are wondering how to obtain the eight model: Remember that a model without any predictors should also be tested. Such a model is called a Null Model and it contains only the intercept: `vaccination ~ 1`**
