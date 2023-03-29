@@ -40,7 +40,7 @@ In most cases, we want our data standardized (z-score). The inbuilt function may
 
 ```{r}
 my_scale <- function(x){
-  (x - mean(x, na.rm=T))/sd(x, na.rm=)
+  (x - mean(x, na.rm=T))/sd(x, na.rm=T)
 }
 ```
 
@@ -183,7 +183,9 @@ To get the value of the effect size (Cohen's d), we need to divide the differenc
 
 $$
 \sigma_{p} = \sqrt{\frac{\sigma^2_1 + \sigma^2_2}{2}}
-$$ Because $\sigma$ is on a log-scale, we need to transform it back to linear scale, with an `exp` function.
+$$
+
+Because $\sigma$ is on a log-scale, we need to transform it back to linear scale, with an `exp` function.
 
 ```{r}
 effect_size <- hypothesis(fit2, "(condRest - condBase)/sqrt((exp(sigma_condRest)^2 + exp(sigma_condBase)^2)/2) = 0")

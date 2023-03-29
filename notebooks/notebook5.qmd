@@ -1,0 +1,507 @@
+---
+title: "Class 5 notebook"
+format: html
+editor: visual
+---
+
+# Load data and libraries
+
+Let's load libraries used during this class.
+
+```{r}
+library(tidyverse)
+library(brms)
+library(bayestestR)
+theme_set(theme_classic())
+```
+
+Let's load the data set. These are the results of a recent experimental study.
+
+Participants were exposed repeatedly to a number of online comments.
+-  Participants in the neutral condition were asked to read neutral comments.
+-  Participants in the hateful condition were asked to read hateful comments against Maldzurs.
+-  After reading the comments, participants were asked to read 5 stories about something bad happening to a Maldzur. They were asked to rate to what extent they feel contempt toward the Maldzur (on a scale from 1 = low intensity to 7 = high intensity).
+-  Additionally, all participants were asked rate a set of 3 hateful comments against Maldzurs, on a scale from 1 (not offensive at all) to 7 (definitely offensive).
+
+We were interested whether exposure to hateful (vs. neutral) comments will affect intensity of contempt. Additionally, we were interested whether sensitivity to hate speech will be related to intensity of contempt.
+
+```{r}
+hate <- read.csv2("data_files/exp_hatespeech.csv")
+hate
+```
+
+# Uncoditional models
+
+Let's standardize continuous variables.
+
+```{r}
+my_scale <- function(x){
+  (x - mean(x, na.rm=T))/sd(x, na.rm=T)
+}
+
+hate <- hate %>% 
+  mutate(z_hs_sens = my_scale(hs_sens),
+         z_contempt = my_scale(contempt))
+```
+
+Let's see how the unconditional model would look like with default priors.
+
+```{r}
+get_prior(
+  formula = z_contempt ~ cond + z_hs_sens,
+  data = hate
+)
+```
+
+Let's assign prior for regression weights - $b$. 
+
+This code with assign the same prior to all regression weights.
+
+```{r}
+priors <- c(
+  set_prior("normal(0, 1)", class="b")
+)
+```
+
+You can also assign separate priors to weights for each predictor.
+
+```{r}
+priors <- c(
+  set_prior("normal(0, 1)", class="b", coef="condneutral"),
+  set_prior("normal(0, 1)", class="b", coef="z_hs_sens")
+)
+```
+
+
+Let's fit a simple Normal regression model.
+
+```{r}
+fit_0 <- brm(
+  data = hate,
+  formula = z_contempt ~ cond + z_hs_sens,
+  prior = priors
+)
+```
+
+Let's print the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
+```{r}
+fit_0
+```
+
+
+Suppose that you would like to get fitted posterior for condition means adjusted for the level of HS sensitivity.
+
+First, you would need to create a grid of all predictors in the model and their values for which you would like to obtain fitted estimates.
+
+```{r}
+crossing(cond = c("hateful","neutral"),
+         z_hs_sens = 0) 
+```
+
+
+Now, you should used this grid as an argument to the `fitted` function.
+
+```{r}
+crossing(cond = c("hateful","neutral"),
+         z_hs_sens = 0) %>% 
+  fitted(fit_0, newdata=.) %>% 
+  as_tibble() %>% 
+  mutate(cond = c("hateful","neutral"))
+```
+
+
+Let's compare it with row unadjusted means.
+
+```{r}
+hate %>% 
+  group_by(cond) %>% 
+  summarise(mean(z_contempt))
+```
+
+
+You can use `fitted` with `summary=FALSE` to get all posterior draws that you can use to draw some custom plots.
+
+```{r}
+crossing(cond = c("hateful","neutral"),
+         z_hs_sens = 0) %>% 
+  fitted(fit_0, newdata=., summary=FALSE) %>%
+  as_tibble() %>% 
+  set_names(c("hateful","neutral")) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "condition", values_to = "adj_means") %>% 
+  ggplot(aes(x=adj_means))+
+  geom_density(aes(colour=condition, fill=condition), alpha = 1/2)
+```
+
+You can also easily plot effects with `conditional_effects`.
+
+Let's start with a conditional effect for *condition*.
+This should give us the same values as previous plot. 
+**Note that these means are assume that the level of *z_hs_sens* is 0**
+
+```{r}
+conditional_effects(fit_0, 
+                    effects = "cond")
+```
+
+Let's plot the conditional effects for levels of *z_hs_sens*.
+**Note that these means are assume that the level of *condition* is 0 (i.e., reference condition, here 'hateful')**
+
+```{r}
+conditional_effects(fit_0, 
+                    effects = "z_hs_sens")
+```
+
+To see both effects at one plot, we use an interaction term (even if our model did not involve any interaction).
+**Note that green errorbars show the same means as the plot showing us the effect of 'cond'.**
+
+```{r}
+conditional_effects(fit_0, 
+                    effects = "cond:z_hs_sens")
+```
+
+
+We can also plot the results in another way by simply switching the order of predictor in the interaction term.
+**Note that red lines and ribbons show the same means as the plot showing us the effect of 'z_hs_sens'.**
+
+```{r}
+conditional_effects(fit_0, 
+                    effects = "z_hs_sens:cond")
+```
+
+# Conditional models
+
+Let's include an interaction term now.
+
+```{r}
+get_prior(
+  formula = z_contempt ~ cond + z_hs_sens + cond:z_hs_sens,
+  data = hate,
+)
+```
+
+Let's set priors for regression weights.
+
+```{r}
+priors <- c(
+  set_prior("normal(0, 1)", class="b", coef="condneutral"),
+  set_prior("normal(0, 1)", class="b", coef="z_hs_sens"),
+  set_prior("normal(0, 1)", class="b", coef="condneutral:z_hs_sens")
+)
+```
+
+In R you can also write `cond * z_hs_sens` which is then unfolded to `cond + z_hs_sens + cond:z_hs_sens`.
+Let's fit the model with an interaction.
+
+```{r}
+fit_1 <- brm(
+  data = hate,
+  formula = z_contempt ~ cond * z_hs_sens,
+  prior = priors
+)
+```
+
+
+Let's print the results. **Remember that in before looking at the results you should also check convergence of MCMC and conduct posterior predictive checks.**
+
+```{r}
+fit_1
+```
+
+Note that regression coefficients for 'condneutral' and 'z_hs_sens' have a specific meaning here. They should not be confused with main effects (as in traditional ANOVA).
+Each of these values tells us the effect of a predictor at the value of another predictor set to 0.
+That is:
+- condneutral is the difference between contempt means in neutral and hateful conditions for participants with the level of 'z_hs_sens' = 0
+- z_hs_sens is the slope for 'z_hs_sens' for participants with the level of 'cond' = 0 (i.e., in hateful condition)
+We will see how to probe interaction (test effects at other values of the other variable) in second.
+
+# Comparing models
+
+Before going further let's compare both models.
+
+$R^2$ for unconditional model. 
+
+```{r}
+bayes_R2(fit_0)
+```
+
+$R^2$ for conditional model. 
+
+```{r}
+bayes_R2(fit_1)
+```
+
+$\Delta R^2$ - increase of explained variance because of interaction.
+To obtain this value, we could simply substract results of the first computation from the first result.
+This would give as a correct estimate, but Est.Error and CIs are incorrect.
+
+```{r}
+bayes_R2(fit_1) - bayes_R2(fit_0)
+```
+
+We can instead use `summary = FALSE` to get draws and compute correct estimates.
+
+```{r}
+r2_fit0 <- bayes_R2(fit_0, summary = F) %>% 
+  data.frame()
+
+r2_fit1 <- bayes_R2(fit_1, summary = F) %>% 
+  data.frame()
+
+r2 <- r2_fit0 %>% 
+  bind_rows(r2_fit1) %>% 
+  mutate(model = rep(str_c("model", 0:1), each = 4000))
+r2 %>% 
+  mutate(draw = rep(1:4000, 2)) %>% 
+  pivot_wider(names_from = model, values_from = R2) %>% 
+  mutate(delta_R2 = model1 - model0) %>% 
+  summarise(Estimate = mean(delta_R2),
+            Est.Error = sd(delta_R2),
+            Q2.5 = quantile(delta_R2, probs = 0.025),
+            Q97.5 = quantile(delta_R2, probs = 0.975))
+```
+
+We can also plot and compare $R2$.
+
+```{r}
+r2 %>% 
+  ggplot(aes(x = R2, fill = model)) +
+  geom_density(size = 0, alpha = 2/3) +
+  scale_fill_manual(values = c("gray20","gray80")) +
+  scale_x_continuous(expression(italic(R)^2~distribution), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL)
+```
+
+We see that there is a lot of uncertainty in whether adding interaction improved our fit.
+
+Let's try with LOOIC, which will account for model complexity.
+
+Compute LOOIC for unconditional model.
+```{r}
+loo_0 <- loo(fit_0)
+loo_0
+```
+
+Compute LOOIC for conditional model.
+```{r}
+loo_1 <- loo(fit_1)
+loo_1
+```
+
+Let's compare values of LOOIC.
+```{r}
+loo_compare(loo_0, loo_1)
+```
+
+Conditional model has a lower LOOIC than unconditional model. However, the difference is small. Thus, the superiority of the former model over latter is uncertain.
+
+
+Based on values of LOOIC we can also create model weights. These would be useful if we would like to use both models to predict future results. We would then average the results of both models, adjusted by a respective weight.
+
+```{r}
+fit_0 <- add_criterion(fit_0, "loo")
+fit_1 <- add_criterion(fit_1, "loo")
+model_weights(fit_0, fit_1)
+```
+
+
+# Probing interaction 
+
+To understand interaction, we usually plot effects of both variables at specific values of the moderator variable.
+
+Let's plot effects of 'cond' at specific values of 'z_hs_sens' (for continuous moderators the default values are M-1SD, M, and M+1SD). 
+
+```{r}
+conditional_effects(fit_1, "cond:z_hs_sens")
+```
+
+
+Let's plot effects of 'z_hs_sens' at specific values of 'cond' (for categorical moderators all values are used by default). 
+
+```{r}
+conditional_effects(fit_1, "z_hs_sens:cond")
+```
+
+
+Alternative way of display using spaghetti plots and added data points.
+
+```{r}
+conditional_effects(fit_1, 
+                    "z_hs_sens:cond",
+                    spaghetti = T,
+                    ndraws = 150) %>% 
+  plot(points = T,
+       point_args = c(alpha = 2/3, size=1), 
+       mean = F,
+       plot=F) %>% 
+  .[[1]] +
+  guides(fill="none")
+```
+
+## Estimating effects at specific values of moderator (M - 1SD, M, M + 1SD)
+
+There are several ways to do this. The easiest is to use `hypothesis`.
+
+Recall that the conditional slope in an interaction analysis is $(\beta_1 + \beta_3W)$.
+
+Let's compute a simple slope of 'cond' (i.e., a difference between conditions) for 'z_hs_sens' equal to 1.
+
+```{r}
+hypothesis(fit_1, "condneutral + condneutral:z_hs_sens * 1 = 0")
+```
+
+
+Let's compute a simple slope of 'cond' for 'z_hs_sens' equal to 1.
+**Note that because 'condneutral:z_hs_sens * 0 = 0' the result will be the same as the slope printed with in the main regression table.**
+
+```{r}
+hypothesis(fit_1, "condneutral + condneutral:z_hs_sens * 0 = 0")
+```
+
+
+Let's compute a simple slope of 'cond' for 'z_hs_sens' equal to 1.
+```{r}
+hypothesis(fit_1, "condneutral + condneutral:z_hs_sens * -1 = 0")
+```
+
+
+Let's compute a simple slope of 'z_hs_sens' for 'condition' equal to 0 (i.e., hateful).
+**Note that because 'condneutral:z_hs_sens * 0 = 0' the result will be the same as the slope printed with in the main regression table.**
+
+```{r}
+hypothesis(fit_1, "z_hs_sens + condneutral:z_hs_sens * 0 = 0")
+```
+
+
+Let's compute a simple slope of 'z_hs_sens' for 'condition' equal to 1 (i.e., neutral).
+
+```{r}
+hypothesis(fit_1, "z_hs_sens + condneutral:z_hs_sens * 1 = 0")
+```
+
+
+If you are familiar with the package `emmeans`, you can also use it to obtain simple slopes.
+In fact, this is the way to easily deal with some of the more complex issues (but it is outside the scope of this class).
+
+```{r}
+library(emmeans)
+emmeans(fit_1, 
+        pairwise~cond|z_hs_sens, 
+        at = list(z_hs_sens = c(-1,0,1)))
+```
+
+
+## Estimating effects at the continuum of the moderator (Johnson-Neyman intervals)
+
+Let's start by creating grid of predictor values. We will use 13 evenly spaced values at the spectrum of 'z_hs_sens'.
+
+```{r}
+n_hsSens_values <- 13    
+
+nd <- crossing(cond   = c("neutral","hateful"),
+               z_hs_sens = seq(from = -2.4144, to = 1.9261, length.out = n_hsSens_values))
+nd
+```
+
+We will now use fitted to obtain fitted posterior values at each combination of predictor values.
+
+```{r}
+
+f <- fitted(fit_1, newdata = nd, summary = F) %>% 
+  data.frame() %>%
+  set_names(mutate(nd, name = str_c(cond, "_", z_hs_sens)) %>% pull(name))  %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter) %>% 
+  separate(name, into = c("cond", "z_hs_sens"), sep = "_") %>% 
+  pivot_wider(names_from = cond, values_from = value) %>% 
+  mutate(difference = hateful - neutral,
+         z_hs_sens    = as.double(z_hs_sens))
+f
+```
+
+After some data manipulation, we will have a dataframe with 13 (number of values of 'z_hs_sens') x 4000 (number of posterior draws) = 52000.
+
+Now we can plot the results.
+
+```{r}
+f %>% 
+  ggplot(aes(x = z_hs_sens %>% round(digits = 2) %>%  as.factor(), y = difference)) +
+  geom_hline(yintercept = 0, color = "red") +
+  geom_violin(linewidth = 0, fill = "blue", alpha=2/3) +
+  stat_summary(fun = median,
+               fun.min = function(x){quantile(x, probs = .025)},
+               fun.max = function(x){quantile(x, probs = .975)},
+               color = "red") +
+  labs(x = expression(paste("HS sensitivity (", italic(W), ")")),
+       y = expression(atop(theta[paste(italic(X), " on ", italic(Y))], paste("Conditional Effect of Exposure to HS"))))
+
+```
+
+We can also create another plot for an infinite number of moderator values.
+I am using a `median_qi` function from `tidybayes`. You can try to install this package and run this chunk of code at home.
+
+```{r}
+library(tidybayes)
+f %>% 
+  group_by(z_hs_sens) %>% 
+  median_qi(difference) %>% 
+  ggplot(aes(x = z_hs_sens)) +
+  geom_hline(yintercept = 0, color = "gray20") +
+  geom_vline(xintercept = 0.34, color = "gray20") +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper),
+              fill = "blue",
+              alpha = 1/2) +
+  geom_line(aes(y = difference),
+            color = "blue", linewidth = 1) +
+  scale_x_continuous(breaks = -2:2) +
+ # coord_cartesian(xlim = c(1, 6),
+#                  ylim = c(-1, 1.5)) +
+  labs(x = expression(paste("HS sensitivity (", italic(W), ")")),
+       y = expression(atop(theta[paste(italic(X), " on ", italic(Y))], paste("Conditional Effect of Exposure to Hate Speech")))) +
+  theme_gray()
+```
+
+We can see more clearly, that interaction can understood as a linear effect of moderator on the size of another effect in regression.
+
+
+# Bonus: mediation analysis
+
+To compute mediation analysis, we need to define formulas for two simultaneous regression equation for the mediator (f1) and for the outcome variable (f2).
+
+We then combine the formula with `+` sign.
+
+We are also adding `set_rescor(FALSE)` to set residuals in both equation to be uncorrelated (this is a common assumption).
+
+```{r}
+f1 <- bf(z_hs_sens ~ cond)
+f2 <- bf(z_contempt ~ z_hs_sens + cond)
+
+get_prior(
+  formula = f1 + f2 + set_rescor(FALSE),
+  data = hate
+)
+```
+
+Let's fit a model.
+
+```{r}
+fit_mediate <- brm(
+    formula = f1 + f2 + set_rescor(FALSE),
+    data = hate,
+    prior = priors
+)
+```
+
+We can print results for both models at the same time.
+
+```{r}
+fit_mediate
+```
+
+To obtain the values of the indirect effect, we can use `mediation` from `bayestestR`.
+```{r}
+mediation(fit_mediate, 
+          treatment = "condneutral")
+```
+

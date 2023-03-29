@@ -1,0 +1,99 @@
+---
+title: "Bayesian Statistics in Social Sciences"
+format: revealjs
+editor: visual
+---
+
+## Example
+
+$Y = f(X, W)$
+
+## Unconditional and conditional effects in regression
+
+```{r}
+library(tidyverse)
+library(directlabels)
+
+
+theme_07 <- theme_gray() + 
+  theme(axis.text = element_text(color = "black"),
+        legend.background = element_rect(fill = "transparent"),
+        legend.key = element_rect(fill = "transparent", color = "transparent"),
+        panel.background = element_rect(fill = "gray60"),
+        panel.grid = element_blank(),
+        plot.background  = element_rect(fill = "white"),
+        strip.background = element_rect(fill = alpha("gray60", 2/3),
+                                        color = "transparent"),
+        text = element_text(family = "Courier",
+                            color = "black",
+                            size = 14))
+
+d <- crossing(x = -1:2,
+              w = 0:2) %>% 
+  mutate(A = 4 + 1 * x + 2 * w,
+         B = 4 + 1 * x + 2 * w + 1.5 * x * w)
+
+d %>% 
+  pivot_longer(A:B, values_to = "y") %>% 
+  mutate(label = str_c("W = ", w),
+         w     = factor(w),
+         strip = if_else(name == "A",
+                         "A: where W is a covariate",
+                         "B: where W is a moderator")) %>% 
+  ggplot(aes(x = x, y = y, group = w, size = w, label = label)) +
+  geom_line(color = "black") +
+  geom_dl(method = list(dl.trans(x = x + 0.2),
+                        "last.points", cex = 1,
+                        color = "black",
+                        fontfamily = "Courier")) +
+  scale_size_manual(values = c(.5, .75, 1)) +
+  coord_cartesian(xlim = c(-1, 2.6),
+                  ylim = c(0, 16)) +
+  labs(x = expression(italic(X)),
+       y = expression(hat(italic(Y)))) +
+  facet_wrap(~ strip) +
+  theme_07+
+  theme(legend.position = "none")
+```
+
+## W as a covariate
+
+$Y = \beta_0 + \beta_1X + \beta_2W$
+
+## W as a moderator
+
+$Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW$
+
+## W as a moderator
+
+$Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW$
+
+$Y = \beta_0 + \beta_2W + \beta_1X + \beta_3XW$
+
+$Y = (\beta_0 + \beta_2W) + (\beta_1 + \beta_3W)X$
+
+$Y = \gamma_0 + \gamma_1X$
+
+$\gamma_0$ - is an intercept of the regression line conditioned on the value of W: $(\beta_0 + \beta_2W)$
+
+$\gamma_1$ - is a slope of the regression line conditioned on the value of W: $(\beta_1 + \beta_3W)$
+
+## W as a moderator
+
+![](figures/moderation.jpg){fig-align="center"}
+
+## Mediation
+
+![](figures/mediation.jpg){fig-align="center"}
+
+## Mediation
+
+Total effect: $Y = \gamma_0 + \gamma_1X$
+
+Effect of X on mediator: $M = \alpha_0 + \alpha_1X$
+
+Effect of M on Y controlling for X: $Y = \beta_0 + \beta_1X + \beta_2M$
+
+Indirect effect: $\gamma_1 - \beta_1 = \alpha_1 \times \beta_2$
+
+
