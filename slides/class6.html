@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="class5_files/libs/clipboard/clipboard.min.js"></script>
-<script src="class5_files/libs/quarto-html/tabby.min.js"></script>
-<script src="class5_files/libs/quarto-html/popper.min.js"></script>
-<script src="class5_files/libs/quarto-html/tippy.umd.min.js"></script>
-<link href="class5_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="class5_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
-<link href="class5_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<script src="class6_files/libs/clipboard/clipboard.min.js"></script>
+<script src="class6_files/libs/quarto-html/tabby.min.js"></script>
+<script src="class6_files/libs/quarto-html/popper.min.js"></script>
+<script src="class6_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="class6_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="class6_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="class6_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.2.280">
 
   <title>Bayesian Statistics in Social Sciences</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-  <link rel="stylesheet" href="class5_files/libs/revealjs/dist/reset.css">
-  <link rel="stylesheet" href="class5_files/libs/revealjs/dist/reveal.css">
+  <link rel="stylesheet" href="class6_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="class6_files/libs/revealjs/dist/reveal.css">
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -28,11 +28,11 @@
       vertical-align: middle;
     }
   </style>
-  <link rel="stylesheet" href="class5_files/libs/revealjs/dist/theme/quarto.css" id="theme">
-  <link href="class5_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
-  <link href="class5_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
-  <link href="class5_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
-  <link href="class5_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <link rel="stylesheet" href="class6_files/libs/revealjs/dist/theme/quarto.css" id="theme">
+  <link href="class6_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="class6_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="class6_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="class6_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
 
   .callout {
@@ -329,53 +329,158 @@
 </div>
 
 </section>
-<section id="example" class="slide level2">
-<h2>Example</h2>
-<div style="text-align: center">
-<p><span class="math inline">\(Y = f(X, W)\)</span></p>
-</div>
-</section>
-<section id="unconditional-and-conditional-effects-in-regression" class="slide level2">
-<h2>Unconditional and conditional effects in regression</h2>
+<section id="regression-with-a-dichotomous-predicted-variable" class="slide level2">
+<h2><small>Regression with a dichotomous predicted variable</small></h2>
 
-<img data-src="class5_files/figure-revealjs/unnamed-chunk-1-1.png" width="960" class="r-stretch"></section>
-<section id="w-as-a-covariate" class="slide level2">
-<h2>W as a covariate</h2>
-<div style="text-align: center;">
-<p><span class="math inline">\(Y = \beta_0 + \beta_1X + \beta_2W\)</span></p>
-</div>
-</section>
-<section id="w-as-a-moderator" class="slide level2">
-<h2>W as a moderator</h2>
-<div style="text-align: center;">
-<p><span class="math inline">\(Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW\)</span></p>
-</div>
-</section>
-<section id="w-as-a-moderator-1" class="slide level2">
-<h2>W as a moderator</h2>
-<div style="text-align: center;">
-<p><span class="math inline">\(Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW\)</span></p>
-<p><span class="math inline">\(Y = \beta_0 + \beta_2W + \beta_1X + \beta_3XW\)</span></p>
-<p><span class="math inline">\(Y = (\beta_0 + \beta_2W) + (\beta_1 + \beta_3W)X\)</span></p>
-<p><span class="math inline">\(Y = \gamma_0 + \gamma_1X\)</span></p>
-</div>
-<p><span class="math inline">\(\gamma_0\)</span> - is an intercept of the regression line conditioned on the value of W: <span class="math inline">\((\beta_0 + \beta_2W)\)</span></p>
-<p><span class="math inline">\(\gamma_1\)</span> - is a slope of the regression line conditioned on the value of W: <span class="math inline">\((\beta_1 + \beta_3W)\)</span></p>
-</section>
-<section id="w-as-a-moderator-2" class="slide level2">
-<h2>W as a moderator</h2>
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-1-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-a-dichotomous-predicted-variable-1" class="slide level2">
+<h2><small>Regression with a dichotomous predicted variable</small></h2>
 
-<img data-src="figures/moderation.jpg" class="r-stretch quarto-figure-center"></section>
-<section id="mediation" class="slide level2">
-<h2>Mediation</h2>
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-a-dichotomous-predicted-variable-2" class="slide level2">
+<h2><small>Regression with a dichotomous predicted variable</small></h2>
 
-<img data-src="figures/mediation.jpg" class="r-stretch quarto-figure-center"></section>
-<section id="mediation-1" class="slide level2">
-<h2>Mediation</h2>
-<p>Total effect: <span class="math inline">\(Y = \gamma_0 + \gamma_1X\)</span></p>
-<p>Effect of X on mediator: <span class="math inline">\(M = \alpha_0 + \alpha_1X\)</span></p>
-<p>Effect of M on Y controlling for X: <span class="math inline">\(Y = \beta_0 + \beta_1X + \beta_2M\)</span></p>
-<p>Indirect effect: <span class="math inline">\(\gamma_1 - \beta_1 = \alpha_1 \times \beta_2\)</span></p>
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-3-1.png" width="960" class="r-stretch"></section>
+<section id="logistic-transformation" class="slide level2">
+<h2>Logistic transformation</h2>
+<p><span class="math display">\[
+logistic(x) = \frac{1}{[1 + exp(-x)]}
+\]</span></p>
+</section>
+<section id="binomialbernoulli-model" class="slide level2">
+<h2>Binomial/Bernoulli model</h2>
+<p><span class="math display">\[
+\mu = logistic(\beta_0 + \beta_1x_1)\\
+y \sim Bernoulli(\mu)
+\]</span></p>
+</section>
+<section id="log-odds-ratios" class="slide level2">
+<h2>Log odds ratios</h2>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
+<section id="log-odds-ratios-1" class="slide level2">
+<h2>Log odds ratios</h2>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"></section>
+<section id="log-odds-ratios-2" class="slide level2">
+<h2>Log odds ratios</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Scale</th>
+<th>Range</th>
+<th>Central value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>probability</td>
+<td>[0, 1]</td>
+<td>0.5</td>
+</tr>
+<tr class="even">
+<td>odds</td>
+<td>[0, <span class="math inline">\(+ \infty\)</span>]</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>log odds</td>
+<td>[<span class="math inline">\(-\infty\)</span>, <span class="math inline">\(+\infty\)</span>]</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-an-ordinal-predicted-variable-1" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-an-ordinal-predicted-variable-2" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-an-ordinal-predicted-variable-3" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+
+<img data-src="class6_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"></section>
+<section id="regression-with-an-ordinal-predicted-variable-4" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = k\ |\&nbsp;\{\tau_k\}) = \Phi(\tau_k) - \Phi(\tau_{k-1})\\
+\{\tau_k\} = \{\tau_1, \tau_2, \tau_3\}
+\]</span></p>
+<p><span class="math inline">\(K + 1\)</span> - number of response options</p>
+<p><span class="math inline">\(\Phi\)</span> - cumulative standard normal distribution</p>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable-5" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = 1\ |\ \{\tau_k\}) = \Phi(\tau_1) - \Phi(\tau_0)\\
+= \Phi(\tau_1) - \Phi(-\infty)\\
+= \Phi(\tau_1) - 0\\
+= \Phi(\tau_1)
+\]</span></p>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable-6" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = 2\ |\&nbsp;\{\tau_k\}) = \Phi(\tau_2) - \Phi(\tau_{1})\\
+p(response = 3\ |\&nbsp;\{\tau_k\}) = \Phi(\tau_3) - \Phi(\tau_{2})\\
+\]</span></p>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable-7" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = 4\ |\&nbsp;\{\tau_k\}) = \Phi(\tau_{4}) - \Phi(\tau_{3})\\
+= \Phi(\infty) - \Phi(\tau_{3})\\
+= 1 - \Phi(\tau_{3})
+\]</span></p>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable-8" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k) - \Phi(\tau_{k-1})\\
+\tau_1 \sim \mathcal{N}(-0.67, 1)\\
+\tau_2 \sim \mathcal{N}(0, 1)\\
+\tau_3 \sim \mathcal{N}(0.67, 1)\\
+\]</span></p>
+</section>
+<section id="regression-with-an-ordinal-predicted-variable-9" class="slide level2">
+<h2><small>Regression with an ordinal predicted variable</small></h2>
+<p><span class="math display">\[
+p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k - \mu_i) - \Phi(\tau_{k-1} - \mu_i)\\
+\mu_i = \beta_0 + \beta_1x_i\\
+\beta_0 = 0\\
+\beta_1 \sim \mathcal{N}(0, 1)\\
+\tau_1 \sim \mathcal{N}(-0.67, 1)\\
+\tau_2 \sim \mathcal{N}(0, 1)\\
+\tau_3 \sim \mathcal{N}(0.67, 1)\\
+\]</span></p>
+</section>
+<section id="regression-with-a-nominal-predicted-variable" class="slide level2">
+<h2><small>Regression with a nominal predicted variable</small></h2>
+<p><span class="math display">\[
+\phi_k \sim softmax(\{\lambda_{k}\}) = \frac{exp(\lambda_k)}{\sum_{c \in S} exp(\lambda_c)}\\
+\lambda_{[k]} = \beta_{0,k} + \beta_{1,k}x\\
+\\
+\lambda_{[r]} = \beta_{0,r} + \beta_{1,r}x = 0 + 0x = 0\\
+\]</span></p>
 <div class="footer footer-default">
 
 </div>
@@ -384,19 +489,19 @@
   </div>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script>
-  <script src="class5_files/libs/revealjs/dist/reveal.js"></script>
+  <script src="class6_files/libs/revealjs/dist/reveal.js"></script>
   <!-- reveal.js plugins -->
-  <script src="class5_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
-  <script src="class5_files/libs/revealjs/plugin/notes/notes.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/search/search.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/zoom/zoom.js"></script>
-  <script src="class5_files/libs/revealjs/plugin/math/math.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="class6_files/libs/revealjs/plugin/math/math.js"></script>
   <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
 
   <script>

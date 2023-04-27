@@ -16,21 +16,20 @@ hs_dep <- read_csv2("data/hate_depres.csv")
 hs_dep
 ```
 
+The dataset contains data from N = 3827 gays and lesbians. - hs - measures how often participants encountered hate speech against gays or lesbians (1 = very rare, 7 = very often) - depres - measures intensity of depression symptoms (using PHQ-8), 1 = low intensity, 5 = high intensity - famAcc - indicates number of family members that accept sexual orientation of participant (from 0 - no one - to 4 - both parents and siblings: brothers and sisters)
 
-The dataset contains data from N = 3827 gays and lesbians. 
-- hs - measures how often participants encountered hate speech against gays or lesbians (1 = very rare, 7 = very often)
-- depres - measures intensity of depression symptoms (using PHQ-8), 1 = low intensity, 5 = high intensity 
-- famAcc - indicates number of family members that accept sexual orientation of participant (from 0 - no one - to 4 - both parents and siblings: brothers and sisters)
+1.  Fit a model that test effects of hs and famAcc on depres.
 
-1. Fit a model that test effects of hs and famAcc on depres. 
-
-a) Start with standardizing variables
+```{=html}
+<!-- -->
+```
+a)  Start with standardizing variables
 
 ```{r}
 
 ```
 
-b) Fit an unconditional model (remember about setting priors)
+b)  Fit an unconditional model (remember about setting priors)
 
 Because the outcome - depression - is highly skewed you may want to set family to `skew_normal`, which will result in a more appropriate posterior predictive distribution. However, keep in mind that such model may take a little bit longer to fit (up to several minutes).
 
@@ -38,7 +37,7 @@ Because the outcome - depression - is highly skewed you may want to set family t
 
 ```
 
-b) Fit a conditional model
+b)  Fit a conditional model
 
 If you decided to use a `skew_normal` family then you should use the same here.
 
@@ -46,7 +45,7 @@ If you decided to use a `skew_normal` family then you should use the same here.
 
 ```
 
-c) Decide which model has better predictive accuracy using LOOIC
+c)  Decide which model has better predictive accuracy using LOOIC
 
 Usually, with large datasets computing LOOIC may take a while (up to several minutes)
 
@@ -62,7 +61,7 @@ Usually, with large datasets computing LOOIC may take a while (up to several min
 
 ```
 
-d) Plot the results for each unique value of family acceptance score.
+d)  Plot the results for each unique value of family acceptance score.
 
 Create a function that will find z-transformed values for scores from 0 to 4, given user defined mean and SD.
 
@@ -72,11 +71,7 @@ my_scale2 <- function(x, mean, sd){
 }
 ```
 
-
-Use `conditional_effects` to draw the interaction of z_hs and z_famAcc (z_hs moderated by z_famAcc). 
-Use 'int_conditions' to specify on which values of the moderator the z_hs effects should be conditioned.
-Use `my_scale2` function (you have to find mean and SD of famAcc and put the values instead of placeholders).
-
+Use `conditional_effects` to draw the interaction of z_hs and z_famAcc (z_hs moderated by z_famAcc). Use 'int_conditions' to specify on which values of the moderator the z_hs effects should be conditioned. Use `my_scale2` function (you have to find mean and SD of famAcc and put the values instead of placeholders).
 
 ```{r}
 conditional_effects(fit_c, 
@@ -84,11 +79,10 @@ conditional_effects(fit_c,
                     int_conditions = list(z_famAcc = my_scale2(0:4, <mean>, <sd>)))
 ```
 
-e) Use `hypothesis` to find values of effects 'z_hs' for each unique value of family acceptance score
+e)  Use `hypothesis` to find values of effects 'z_hs' for each unique value of family acceptance score
 
 ```{r}
 
 ```
 
-f) Interpret the results
-
+f)  Interpret the results

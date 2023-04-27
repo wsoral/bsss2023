@@ -1,0 +1,39 @@
+---
+title: "Homework 6"
+format: html
+editor: visual
+---
+
+Let's load required packages.
+
+```{r}
+library(tidyverse)
+library(brms)
+```
+
+Let's load another subset from PPS. Here you can see one of the variables used before:
+
+-   dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject)
+
+Another variable is contact:
+
+-   contact - contact, number of homosexual individuals personally known by a participant (1 = no contact; 2 = contact, 1-2 individuals; 3 = contact, several; 4 = contact, many; 5 = contact, a lot of)
+
+```{r}
+pps_home <- readRDS("data/pps_home.rds")
+pps_home
+```
+
+Your task is to test whether contact can be used to predict rejection of homosexual relationship of a family member.
+
+The only problem is that contact is an ordinal variable. You could treat it as any categorical variable and use dummy coding (or any other coding scheme).
+
+However, your task is to get familiar with monotonic effects implemented in `brms`. Read this article: [article](https://bpspsychub.onlinelibrary.wiley.com/doi/full/10.1111/bmsp.12195)
+
+Also read this vignette: [vignette](https://paul-buerkner.github.io/brms/articles/brms_monotonic.html)
+
+1.  Remember about each step of the Bayesian workflow.
+2.  Fit the correct cumulative probit model with monotonic effects.
+3.  Plot the results.
+4.  Conduct SEXIT tests.
+5.  Interpret the results. Try to answer not only whether contact can result in increase/decrease in prejudice, but also at which point the largest change occurs (i.e., from no contact to small contact vs. from small contact to some contact vs. from some contact to medium contact vs. from medium contact to a lot of contact)

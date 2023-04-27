@@ -6,7 +6,9 @@ editor: visual
 
 ## Example
 
+::: {style="text-align: center"}
 $Y = f(X, W)$
+:::
 
 ## Unconditional and conditional effects in regression
 
@@ -58,14 +60,19 @@ d %>%
 
 ## W as a covariate
 
+::: {style="text-align: center;"}
 $Y = \beta_0 + \beta_1X + \beta_2W$
+:::
 
 ## W as a moderator
 
+::: {style="text-align: center;"}
 $Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW$
+:::
 
 ## W as a moderator
 
+::: {style="text-align: center;"}
 $Y = \beta_0 + \beta_1X + \beta_2W + \beta_3XW$
 
 $Y = \beta_0 + \beta_2W + \beta_1X + \beta_3XW$
@@ -73,6 +80,7 @@ $Y = \beta_0 + \beta_2W + \beta_1X + \beta_3XW$
 $Y = (\beta_0 + \beta_2W) + (\beta_1 + \beta_3W)X$
 
 $Y = \gamma_0 + \gamma_1X$
+:::
 
 $\gamma_0$ - is an intercept of the regression line conditioned on the value of W: $(\beta_0 + \beta_2W)$
 
@@ -95,5 +103,3 @@ Effect of X on mediator: $M = \alpha_0 + \alpha_1X$
 Effect of M on Y controlling for X: $Y = \beta_0 + \beta_1X + \beta_2M$
 
 Indirect effect: $\gamma_1 - \beta_1 = \alpha_1 \times \beta_2$
-
-

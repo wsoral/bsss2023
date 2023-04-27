@@ -1,0 +1,305 @@
+---
+title: "Bayesian Statistics in Social Sciences"
+format: revealjs
+editor: source
+---
+
+
+
+## <small>Regression with a dichotomous predicted variable</small>
+
+```{r}
+library(tidyverse)
+library(brms)
+tibble(x = rnorm(100, 0, 1),
+       y = as.numeric(inv_logit_scaled(0.3 + 2.2*x + rnorm(100, 0, 1)) > 0.5)) %>% 
+  ggplot(aes(x,y))+
+  geom_jitter(width = 0, height = 0.1)+
+  scale_y_continuous(breaks = 0:1)+
+  ggtitle("Continuous predictor, binary predicted variable")+
+  theme_classic()
+```
+
+## <small>Regression with a dichotomous predicted variable</small>
+
+```{r}
+tibble(x = rnorm(100, 0, 1),
+       y = as.numeric(inv_logit_scaled(0.3 + 2.2*x + rnorm(100, 0, 1)) > 0.5)) %>% 
+  ggplot(aes(x,y))+
+  geom_jitter(width = 0, height = 0.1)+
+  geom_smooth(method = "lm")+
+  ggtitle("Continuous predictor, binary predicted variable, linear fit")+
+  scale_y_continuous(breaks = 0:1)+
+  theme_classic()
+```
+
+## <small>Regression with a dichotomous predicted variable</small>
+
+```{r}
+tibble(x = rnorm(100, 0, 1),
+       y = as.numeric(inv_logit_scaled(0.3 + 2.2*x + rnorm(100, 0, 1)) > 0.5)) %>% 
+  ggplot(aes(x,y))+
+  geom_jitter(width = 0, height = 0.1)+
+  geom_smooth(method = "glm", method.args=list(family="binomial"))+
+  ggtitle("Continuous predictor, binary predicted variable, logistic fit")+
+  scale_y_continuous(breaks = 0:1)+
+  theme_classic()
+```
+
+## Logistic transformation
+
+$$
+logistic(x) = \frac{1}{[1 + exp(-x)]}
+$$
+
+## Binomial/Bernoulli model
+
+$$
+\mu = logistic(\beta_0 + \beta_1x_1)\\
+y \sim Bernoulli(\mu)
+$$
+
+## Log odds ratios
+
+```{r}
+tibble(cond = c("control", "experimental"),
+       prob = c(0.50, 0.75)) %>% 
+  ggplot(aes(cond, prob))+
+  geom_col(width=0.25)+
+  geom_label(aes(label=paste0(100*prob,"%")))+
+  labs(x="Condition", y="Proportion correct")+
+  ggtitle("Difference (experimental - condition) in Ps is 25%")+
+  scale_y_continuous(limits = c(0, 1), labels = scales::percent_format())
+```
+
+## Log odds ratios
+
+```{r}
+tibble(cond = c("control", "experimental"),
+       prob = c(0.50, 0.75),
+       odds = prob/(1-prob)) %>% 
+  ggplot(aes(cond, odds))+
+  geom_col(width=0.25)+
+  geom_label(aes(label=odds))+
+  labs(x="Condition", y="Odds (P/(100-P)")+
+  ggtitle("Ratio (experimental/condition) of odds is 3, and its log is 1.10")
+```
+
+## Log odds ratios
+
+| Scale       | Range                    | Central value |
+|-------------|--------------------------|---------------|
+| probability | \[0, 1\]                 | 0.5           |
+| odds        | \[0, $+ \infty$\]        | 1             |
+| log odds    | \[$-\infty$, $+\infty$\] | 0             |
+
+
+## <small>Regression with an ordinal predicted variable</small>
+
+```{r}
+den <-
+  tibble(panel = 1:4,
+         mu    = c(4, 1, 4, 4),
+         sigma = c(1.5, 2.5, 1, 3)) %>% 
+  mutate(strip = factor(panel,
+                        labels  = str_c("mu==", mu, "~~sigma==", sigma),
+                        ordered = T)) %>% 
+  mutate(multiplier = c(26, 58, 24, 26) / dnorm(mu, mu, sigma)) %>% 
+  expand_grid(y = seq(from = -1, to = 9, by = .1)) %>% 
+  mutate(density = dnorm(y, mu, sigma)) %>% 
+  mutate(percent = density * multiplier)
+```
+
+```{r}
+theta_3 <- c(1.5, 3.1, 3.7, 4.3, 4.9, 6.5)
+theta_4 <- c(1.5, 2.25, 3, 5, 5.75, 6.5)
+
+label_3 <- c(1, 2.2, 3.4, 4, 4.6, 5.7, 7)
+label_4 <- c(1, 1.875, 2.625, 4, 5.375, 6.125, 7)
+
+theta_1 <- seq(from = 1.5, to = 6.5, by = 1)
+label_1 <- 1:7
+
+make_ordinal <- function(x, panel) {
+  
+  if (panel < 3) {
+    
+    case_when(
+      x  < theta_1[1] ~ label_1[1],
+      x  < theta_1[2] ~ label_1[2],
+      x  < theta_1[3] ~ label_1[3],
+      x  < theta_1[4] ~ label_1[4],
+      x  < theta_1[5] ~ label_1[5],
+      x  < theta_1[6] ~ label_1[6],
+      x >= theta_1[6] ~ label_1[7]
+    )
+    
+  } else if (panel == 3) {
+    
+    case_when(
+      x  < theta_3[1] ~ label_3[1],
+      x  < theta_3[2] ~ label_3[2],
+      x  < theta_3[3] ~ label_3[3],
+      x  < theta_3[4] ~ label_3[4],
+      x  < theta_3[5] ~ label_3[5],
+      x  < theta_3[6] ~ label_3[6],
+      x >= theta_3[6] ~ label_3[7]
+    )
+    
+  } else {
+    
+    case_when(
+      x  < theta_4[1] ~ label_4[1],
+      x  < theta_4[2] ~ label_4[2],
+      x  < theta_4[3] ~ label_4[3],
+      x  < theta_4[4] ~ label_4[4],
+      x  < theta_4[5] ~ label_4[5],
+      x  < theta_4[6] ~ label_4[6],
+      x >= theta_4[6] ~ label_4[7]
+    )
+   }
+}
+
+```
+
+```{r}
+set.seed(23)
+bar <- readRDS("class6_sim_data.rds")
+```
+
+```{r}
+plot_bar_den <- function(panel_n, theta, y_second_x, ylim_ub) {
+  bar %>% 
+    filter(panel == panel_n) %>% 
+    
+    ggplot(aes(x = y)) +
+    geom_area(data = den %>% filter(panel == panel_n),
+              aes(y = percent),
+              fill = "orange") +
+    geom_vline(xintercept = theta, color = "white", linetype = 3) +
+    geom_linerange(aes(ymin = 0, ymax = percent),
+                   color = "brown", alpha = .85, linewidth = 8) +
+    geom_text(aes(y = percent + (percent_max / 15), label = percent_label),
+              size = 3.5) +
+    annotate(geom = "text", x = theta, y = y_second_x,
+             label = theta, size = 3) +
+    scale_x_continuous(NULL, 
+                       breaks = theta,
+                       labels = parse(text = str_c("theta[", 1:6, "]")),
+                       expand = c(0, 0)) +
+    scale_y_continuous(NULL, breaks = NULL, expand = expansion(mult = c(0, 0.05))) +
+    coord_cartesian(ylim = c(0, ylim_ub))+
+    theme_minimal()
+}
+```
+
+```{r}
+p1 <- plot_bar_den(panel_n    = 1, 
+                   theta      = theta_1, 
+                   # y_second_x = -6.75, 
+                   y_second_x = -5.55, 
+                   ylim_ub    = 28)
+
+p2 <- plot_bar_den(panel_n    = 2, 
+                   theta      = theta_1, 
+                   # y_second_x = -15.5 * 3/4, 
+                   y_second_x = -12.37, 
+                   ylim_ub    = 63)
+
+p3 <- plot_bar_den(panel_n    = 3, 
+                   theta      = theta_3, 
+                   # y_second_x = -6.25 * 3/4, 
+                   y_second_x = -5.12, 
+                   ylim_ub    = 25.75)
+
+p4 <- plot_bar_den(panel_n    = 4, 
+                   theta      = theta_4, 
+                   # y_second_x = -6.75 * 3/4, 
+                   y_second_x = -5.55, 
+                   ylim_ub    = 28)
+
+p1
+```
+
+## <small>Regression with an ordinal predicted variable</small>
+
+```{r}
+p2
+```
+
+## <small>Regression with an ordinal predicted variable</small>
+
+```{r}
+p3
+```
+
+## <small>Regression with an ordinal predicted variable</small>
+
+```{r}
+p4
+```
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$
+p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k) - \Phi(\tau_{k-1})\\
+\{\tau_k\} = \{\tau_1, \tau_2, \tau_3\}
+$$
+
+$K + 1$ - number of response options 
+
+$\Phi$ - cumulative standard normal distribution
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$ 
+p(response = 1\ |\ \{\tau_k\}) = \Phi(\tau_1) - \Phi(\tau_0)\\
+= \Phi(\tau_1) - \Phi(-\infty)\\
+= \Phi(\tau_1) - 0\\
+= \Phi(\tau_1) 
+$$
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$
+p(response = 2\ |\ \{\tau_k\}) = \Phi(\tau_2) - \Phi(\tau_{1})\\
+p(response = 3\ |\ \{\tau_k\}) = \Phi(\tau_3) - \Phi(\tau_{2})\\
+$$
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$
+p(response = 4\ |\ \{\tau_k\}) = \Phi(\tau_{4}) - \Phi(\tau_{3})\\ 
+= \Phi(\infty) - \Phi(\tau_{3})\\ 
+= 1 - \Phi(\tau_{3})
+$$
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$
+p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k) - \Phi(\tau_{k-1})\\
+\tau_1 \sim \mathcal{N}(-0.67, 1)\\
+\tau_2 \sim \mathcal{N}(0, 1)\\
+\tau_3 \sim \mathcal{N}(0.67, 1)\\
+$$
+
+## <small>Regression with an ordinal predicted variable</small>
+
+$$
+p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k - \mu_i) - \Phi(\tau_{k-1} - \mu_i)\\
+\mu_i = \beta_0 + \beta_1x_i\\
+\beta_0 = 0\\
+\beta_1 \sim \mathcal{N}(0, 1)\\
+\tau_1 \sim \mathcal{N}(-0.67, 1)\\
+\tau_2 \sim \mathcal{N}(0, 1)\\
+\tau_3 \sim \mathcal{N}(0.67, 1)\\
+$$
+
+## <small>Regression with a nominal predicted variable</small>
+
+$$
+\phi_k \sim softmax(\{\lambda_{k}\}) = \frac{exp(\lambda_k)}{\sum_{c \in S} exp(\lambda_c)}\\
+\lambda_{[k]} = \beta_{0,k} + \beta_{1,k}x\\
+\\
+\lambda_{[r]} = \beta_{0,r} + \beta_{1,r}x = 0 + 0x = 0\\
+$$

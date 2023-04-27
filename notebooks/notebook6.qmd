@@ -1,0 +1,359 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+Let's start by loading required libraries.
+
+```{r}
+library(tidyverse)
+library(brms)
+library(bayestestR)
+library(marginaleffects)
+theme_set(theme_classic())
+```
+
+Then load the dataset for today's class.
+
+```{r}
+pps <- read_csv2("data_files/pps.csv")
+
+pps %>% 
+  glimpse()
+```
+
+This is a subset of Polish Prejudice Survey 2021, a nationally representative survey of Polish adults. All continuous variables were standardized. There are also some categorical variables.
+
+## Regression with a dichotomous predicted variable
+
+In this example, we will use two variables: - vacc - whether a person is vaccinated against COVID-19 (0 = no, 1 = yes) - mspi - average score of the Conspiracy Mentality Scale
+
+We want to test - in a retrospective manner - whether conspiracy mentality is a predictor of getting a vaccination.
+
+```{r}
+pps %>% 
+  ggplot(aes(x = mspi, y= vacc))+
+  geom_jitter(height=.1, alpha=0.3)+
+  scale_y_continuous(breaks=0:1)
+```
+
+When your outcome variable is dichotomous (0/1) it can be fitted with a likelihood family called `bernoulli`.
+
+```{r}
+get_prior(vacc ~ mspi, 
+          data = pps, 
+          family= bernoulli())
+```
+
+We will use weakly informative Normal prior on both the intercept and slope. We will set parameters of this prior to 0 for mean and 2 for its SD (following Kruschke's, 2014 example; you can use 1 instead).
+
+```{r}
+logistic_prior <-  c(set_prior("normal(0, 2)", class = "Intercept"),
+                     set_prior("normal(0, 2)", class = "b"))
+
+logistic_fit <- brm(vacc ~ mspi, 
+           data = pps, 
+           family= bernoulli(),
+           prior = logistic_prior,
+           sample_prior = "yes")
+```
+
+Coefficients in the table below are on the log odds ratios. In most cases, they will be difficult to interpret (beyond some knowledge about their direction and credibility).
+
+```{r}
+logistic_fit
+```
+
+Plotting usually helps in understanding the results.
+
+```{r}
+conditional_effects(logistic_fit, "mspi", spaghetti = T, ndraws=100) %>% 
+  plot(line_args = list(colour="red"), plot=F) %>% 
+  .[[1]]+
+  labs(x="Conspiracy mentality (z-score)", y="Vaccinated")+
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+If we would like to conduct SEXIT tests, we need to find values of log-odds that represent practically non-significant, as well as large effects.
+
+Funder and Ozer (2019) suggest that effects such small as r = .05 (d = 0.1001) can have be potentially consequential in the not-very-long run. Thus, smaller values can be treated as practically non-significant. Furthermore, they suggest that r = .30 (d = 0.629) should be regarded as a large effect size. How to get values of lnOR from these values?
+
+You can use this formulas: 
+
+$$
+lnOR = \frac{\pi}{\sqrt{3}} * d_{Cohen}
+$$ 
+
+$$
+d_{Cohen} = \frac{\pi}{\sqrt{3}} * lnOR
+$$
+
+Using these formulas we set threashold for significance to .18, and a threshold for a large effect to 1.14.
+
+```{r}
+sexit(logistic_fit, significant = 0.18, large = 1.14)
+```
+
+Some authors suggest to use odds ratios (OR) as a measure of effect size in logistic regression. To get OR you can use `hypothesis` and just find the exponential of the effect.
+
+```{r}
+hypothesis(logistic_fit, "exp(mspi) = 0")
+```
+
+*This value tells us how many times the odds of success (1) increase if we change the predictor value by 1.* For example, if for some value of conspiracy mentality the probability of vaccination was P = .75 (odds = 3), then by increasing conspiracy mentality by 1 unit will would expect odds to be 2.43 (P = .71).
+
+Recall, that the null effect on the OR scale is 1 (not 0). Therefore, to test this value you should compare it to 1.
+
+```{r}
+hypothesis(logistic_fit, "exp(mspi) = 1")
+```
+
+Some authors prefer to use average change in probability as a measure of the effect size. Such "marginal effect" can be found by taking the partial derivative of the regression equation to a variable in the model.
+
+You can find such average (marginal) effects by using `avg_slopes` from the `marginaleffects` package.
+
+```{r}
+avg_slopes(logistic_fit)
+```
+
+## Regression with a ordinal predicted variable
+
+In this example, we will use two variables: - dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject) - disg_sens - average score of a scale measuring sensitivity to several disgusting stimuli (rotten vegetables, vomits et al.)
+
+We can treat disg_sens as a continuous variable.
+
+```{r}
+pps %>% 
+  ggplot(aes(x = disg_sens))+
+  geom_histogram()
+```
+
+However, dyst has only 4 values and the distribution does not look Normal.
+
+```{r}
+pps %>% 
+  count(dyst) %>% 
+  mutate(per = n/sum(n)) %>% 
+  ggplot(aes(x=dyst, y=per))+
+  geom_col()+
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+If we would like to investigate whether disgust sensitivity can be used to predict distance towards homosexuals, using Normal model would not be the smartest choice.
+
+To implement ordinal probit model, we can use `cumulative` family likelihood. Let's start with a model with no predictors.
+
+```{r}
+get_prior(
+  dyst ~ 1,
+  data = pps, 
+  family = cumulative(probit)
+)
+```
+
+Such model will always have K - 1 threshold parameters, where K is the number of ordinal categories.
+
+We can find plausible values of these threshold, by cutting the Normal distribution into K parts.
+
+```{r}
+number_of_choices = 4
+
+tibble(category = 1:number_of_choices,
+       probability = 1/number_of_choices,
+       cumulative_prob = cumsum(probability),
+       normal_thresholds = qnorm(cumulative_prob))
+```
+
+We can use insert this information into our model.
+
+```{r}
+cumulative_fit_null <- brm(
+  dyst ~ 1,
+  data = pps, 
+  family = cumulative(probit),
+  prior = c(set_prior("normal(-0.6744898, 1)", class="Intercept", coef="1"),
+            set_prior("normal(0, 1)", class="Intercept", coef="2"),
+            set_prior("normal(0.6744898, 1)", class="Intercept", coef="3")),
+  sample_prior = "yes"
+) 
+```
+
+```{r}
+cumulative_fit_null
+```
+
+We can see that estimated thresholds on the Normal distribution density plot.
+
+```{r}
+tibble(x = seq(from = -3.5, to = 3.5, length.out = 200)) %>% 
+  mutate(d = dnorm(x = x)) %>% 
+  ggplot(aes(x = x, y = d)) +
+  geom_area(fill = "black", alpha = 1/3) +
+  geom_col(data=pps %>% 
+              count(dyst) %>% 
+              na.omit() %>% 
+              mutate(per = n/sum(n),
+                     x_loc=c(-1,-0.2,0.48,1.2)),
+           aes(x=x_loc, y=per), width=0.3)+
+  geom_vline(xintercept = fixef(cumulative_fit_null)[, 1], linetype = 3) +
+  scale_x_continuous(expression(Phi), breaks = -3:3,
+                     sec.axis = dup_axis(
+    name = NULL,
+    breaks = fixef(cumulative_fit_null)[, 1] %>% as.double(),
+    labels = parse(text = str_c("tau[", 1:3, "]"))
+    )) +
+#  scale_y_continuous(NULL, breaks = NULL) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  labs(title = "Latent distribution for fit_cumulative_null",
+       subtitle = "By definition and identification constraints, the shape is a standardized normal.")
+```
+
+Now, let's fit the model with our predictor variable.
+
+```{r}
+get_prior(
+  dyst ~ disg_sens, 
+  data = pps, 
+  family =  cumulative(probit)
+)
+```
+
+Note that we only need to add a prior on regression coefficient. Sigma (SD of residuals) is fixed to 0.
+
+```{r}
+cumulative_prior <-  c(set_prior("normal(0, 1)", class = "b"),
+                       set_prior("normal(-0.6744898, 1)", class="Intercept", coef="1"),
+                       set_prior("normal(0, 1)", class="Intercept", coef="2"),
+                       set_prior("normal(0.6744898, 1)", class="Intercept", coef="3"))
+
+cumulative_fit <- brm(dyst ~ disg_sens, 
+           data = pps, 
+           family=  cumulative(probit),
+           prior = cumulative_prior,
+           sample_prior = "yes")
+```
+
+Let's see our results. As in previous example interpretation of these results may be difficult. They are on the log odds scale.
+
+```{r}
+cumulative_fit
+```
+
+Plotting the results may help to better understand what's going on.
+
+There are 2 way to plot effects in cumulative models.
+
+First, you can plot effect on each ordinal category.
+
+```{r}
+conditional_effects(cumulative_fit, "disg_sens", spaghetti = T, ndraws=100,
+                    categorical = T) %>% 
+  plot(plot=F) %>% 
+  .[[1]]+
+  labs(x="Disgust sensitivity (z-score)", y="Distance towards homosexuals (probability of response)",
+       colour="Response")+
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+Second, you can estimate expected score of the predicted variable. However, this does not always have meaningful interpretation.
+
+```{r}
+conditional_effects(cumulative_fit, "disg_sens", spaghetti = T, ndraws=100) %>% 
+  plot(line_args = list(colour="red"), plot=F) %>% 
+  .[[1]]+
+  labs(x="Disgust sensitivity (z-score)", y="Distance towards homosexuals (expected score)")+
+  scale_y_continuous(breaks=1:4, limits=c(1,4))
+```
+
+As in the previous case you can use SEXIT with values of 0.18 and 1.14 to represent practically significant and large effects respectively.
+
+```{r}
+sexit(cumulative_fit, significant = 0.18, large = 1.14)
+```
+
+As in the previous case you can use `hypothesis` to get OR.
+
+```{r}
+hypothesis(cumulative_fit, "exp(disg_sens) = 0")
+```
+
+`avg_slopes` will result in average marginal slopes that represent percent-score change in categories.
+
+```{r}
+avg_slopes(cumulative_fit)
+```
+
+
+## Regression with a nominal predicted variable
+
+In this final example, we will use two variables: 
+
+- party - political party preferences (ruling party = PiS, opposition = (KO, Lewica, PSL, PL2050), radicals = (Konfederacja, Kukiz), other = smaller parties, nonVote = non voting) - sys_jus - average score of System Justification Scale
+
+We will investigate whether system justification can be used to predict party preferences.
+
+Currently, the choices of families to model nominal predicted variables are limited. The only option is `categorical` family likelihood, which is a softmax regression.
+
+```{r}
+get_prior(
+  party ~ sys_jus,
+  data = pps,
+  family = categorical
+)
+```
+
+Following Kruschke (2014) we will set Normal prior with M = 0 and SD = 20 for regression slopes. Note it is recommended to set separate prior for each outcome category.
+
+This model probably will take some time to fit.
+
+```{r}
+categorical_prior <- c(set_prior("normal(0, 20)", class = "b", dpar = "muopposition"),
+                       set_prior("normal(0, 20)", class = "b", dpar = "muother"),
+                       set_prior("normal(0, 20)", class = "b", dpar = "muradicals"),
+                       set_prior("normal(0, 20)", class = "b", dpar = "murulingparty"))
+
+fit_categorical <- brm(
+  party ~ sys_jus,
+  data = pps,
+  family = categorical,
+  prior = categorical_prior,
+  sample_prior = "yes"
+)
+```
+
+The results in the table are extremely difficult to interpret. - First, they are on the log-odds scale. - Second, they represent change in odds relative to the reference category (the one that is not included in the table, here "nonVoting").
+
+```{r}
+fit_categorical
+```
+
+Plotting wil give us a better picture.
+
+```{r}
+conditional_effects(fit_categorical, "sys_jus",
+                    categorical = TRUE, spaghetti = TRUE, ndraws=100) %>% 
+  plot(plot=F) %>% 
+  .[[1]]+
+  labs(x="System justification (z-score)", y="Party support (probability of response)",
+       colour="Response")+
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+To get average marginal effects for each group, you can use `avg_slopes`
+
+```{r}
+ave_effects <- avg_slopes(fit_categorical)
+ave_effects
+```
+
+To conduct SEXIT tests on average effects, we need to find thresholds for practically significant and large effects. I am not aware of any recommendations, so I will choose my own. - I will treat any change smaller than 3 percent points as practical equivalence. - I will treat any change larger than 10 percent points as large.
+
+Then, you can extract posterior draws from the object with average marginal effects and after some transformations you can insert the posterior into `sexit`.
+
+```{r}
+posterior_draws(ave_effects) %>% 
+  select(group, draw, drawid) %>% 
+  pivot_wider(names_from = "group", values_from = "draw") %>% 
+  sexit(significant = 0.03, large = 0.10)
+```
