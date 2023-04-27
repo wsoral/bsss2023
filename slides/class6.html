@@ -350,8 +350,10 @@ logistic(x) = \frac{1}{[1 + exp(-x)]}
 <section id="binomialbernoulli-model" class="slide level2">
 <h2>Binomial/Bernoulli model</h2>
 <p><span class="math display">\[
+y \sim Bernoulli(\mu)\\
 \mu = logistic(\beta_0 + \beta_1x_1)\\
-y \sim Bernoulli(\mu)
+\beta_0 \sim \mathcal{N}(m_0, s_0)\\
+\beta_1 \sim \mathcal{N}(m_1, s_1)
 \]</span></p>
 </section>
 <section id="log-odds-ratios" class="slide level2">
