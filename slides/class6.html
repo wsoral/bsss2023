@@ -481,7 +481,8 @@ p(response = k\ |\ \{\tau_k\}) = \Phi(\tau_k - \mu_i) - \Phi(\tau_{k-1} - \mu_i)
 \phi_k \sim softmax(\{\lambda_{k}\}) = \frac{exp(\lambda_k)}{\sum_{c \in S} exp(\lambda_c)}\\
 \lambda_{[k]} = \beta_{0,k} + \beta_{1,k}x\\
 \\
-\lambda_{[r]} = \beta_{0,r} + \beta_{1,r}x = 0 + 0x = 0\\
+\beta_{0,k} \sim \mathcal{N}(m_k, s_k)\\
+\lambda_{[r]} = \beta_{0,r} + \beta_{1,r}x = 0 + 0x = 0
 \]</span></p>
 <div class="footer footer-default">
 
