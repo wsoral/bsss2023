@@ -1,0 +1,411 @@
+---
+title: "Notebook 7"
+format: html
+editor: visual
+---
+
+Let's load required packages.
+
+```{r}
+library(tidyverse)
+library(brms)
+library(bayestestR)
+library(ggridges)
+theme_set(theme_classic())
+```
+
+In today's class we will continue using data from the Polish Prejudice Survey 2021.
+
+```{r}
+pps2 <- read_csv("data_files/pps2.csv")
+
+pps2 %>% 
+  glimpse()
+```
+
+We will be interested in modeling conspiracy mentality:
+- mspi_z - standardized responses to a scale of items about politics being ruled by conspiracies
+
+We will investigate a set of predictors:
+- voiv - voivodeship (16 values), we expect that there are substantial differences in conspiracy mentality between voivodeships
+- pis - being a Prawo i Sprawidliość supporter (1) or not (0); this is an individual-level predictor
+- corrupt_z - level of corruption within a voivodeship assessed via the number of investigated corruption cases in a voivdeship; this is voivodeship-level predictor
+
+Let's plot the outcome variable:
+
+```{r}
+pps2 %>% 
+  ggplot(aes(x=mspi_z)) +
+  geom_histogram()+
+  labs(x="Conspiracy mentality (z-score)", y="Count")
+```
+
+Let's plot a distribution of participants' places of living. 
+In classical/Frequentist approach to multilevel modeling, we would expect to have at least 30 observations within each cluster (i.e., voivodeship) and more that 20 clusters (voivovedships). While the first condition is satisfied, the second is impossible to meet. 
+We could change voivodeships to counties (powiaty), but then number of observations within each cluster would be well below 30.
+A better approach is to use Bayesian multilevel models, which are more robust to small number of clusters (see, Stegmueller, D. (2013). How many countries for multilevel modeling? A comparison of frequentist and Bayesian approaches. American Journal of Political Science, 57(3), 748-761.)
+
+```{r}
+pps2 %>% 
+  count(voiv) %>% 
+  ggplot(aes(y=reorder(voiv, n), x=n))+
+  geom_col()+
+  labs(y="Voivodeship", x="Count")
+```
+
+Let's plot a distribution of an individual level predictor: voting for PiS.
+Note that despite we are dealing with a categorical variable I coded it as a numeric type rather a factor. This is the only correct way to model random categorical variable effects in `brms`. 
+
+```{r}
+pps2 %>% 
+  count(pis) %>% 
+  na.omit() %>% 
+  ggplot(aes(x=pis, y=n))+
+  geom_col()+
+  labs(x="Voting for PiS", y="Count")+
+  scale_x_continuous(breaks=0:1, labels = c("no", "yes"))
+```
+
+
+## Null model
+
+Let's start by fitting a model with only cluster (i.e., voivodeship) effects.
+
+```{r}
+get_prior(mspi_z ~ 1 + (1 | voiv),
+                    data=pps2)
+```
+
+None of the default priors is flat. Thus, we can leave them as they are. One could try setting better priors, but this would be outside to scope of this course.
+
+To fit random effects (i.e., effects based on some defined clusters) you should use a formula which is based on `lme4` package:
+(random_effect | grouping_variable).
+
+Here we are including a fixed as well as random intercepts (`1`). The fixed intercept refers to population mean, whereas the random intercept refers to cluster (voivodeship) means.
+
+```{r}
+fit_null <- brm(mspi_z ~ 1 + (1 | voiv),
+                data=pps2,
+                sample_prior = "yes")
+```
+
+Let's print the results.
+
+```{r}
+fit_null
+```
+
+This model is often used to decompose the predicted variable variance into between and within parts.
+
+To get between cluster variable we can use this code snippet:
+
+```{r}
+between_cluster_sd <- VarCorr(fit_null)$voiv$sd[1,1]
+between_cluster_sd
+```
+
+Similarly, to get within cluster variance we can use this code:
+
+```{r}
+within_cluster_sd <- VarCorr(fit_null)$residual__$sd[1,1]
+within_cluster_sd
+```
+
+One value which is often reported with multilevel models is intraclass correlation (ICC). Which is computed using this simple formula:
+
+$$
+ICC = \frac{\sigma^2_{between}}{\sigma^2_{between} + \sigma^2_{within}}
+$$
+
+Thus this is a proportion of between cluster variance to the total variance -> to what extent clusters are responsible for the differences in the outcome variable.
+It can be also interpreted as an average correlation between subjects drawn randomly from the same cluster.
+Some argue that ICC should be above some threshold (e.g., .10) to motivate the use of multilevel modeling. However, even with smaller values it may make sense to use such models.
+
+Let's compute the ICC.
+
+```{r}
+between_cluster_sd^2 / (between_cluster_sd^2 + within_cluster_sd^2)
+```
+
+Or you can use some predefined function (you should have a package `performace` installed to run the code below)
+
+```{r}
+performance::icc(fit_null)
+```
+
+Let's plot group level intercepts. Below I added also raw data based on simple computation of mean of mspi_z for each voivodeship.
+
+Note that fitted and raw values differ considerably. In particular fitted values tend to be shrunked around the population mean, i.e., they are less extreme than raw data. 
+Note that while fitted values are based on the entire sample (N = 1016), raw data are based on samples sizes from 30 to 151. Thus, fitted values can be deemed as more reliable (less biased) than raw data.
+
+```{r}
+raw_est <- pps2 %>% 
+  group_by(voiv) %>% 
+  summarise(raw_est = mean(mspi_z, na.rm=T))
+
+nd = tibble(voiv = unique(pps2$voiv)) %>% 
+  arrange(voiv)
+
+nd %>% 
+  bind_cols(
+    fitted(fit_null,
+          newdata = .)
+  ) %>% 
+  ggplot(aes(x = Estimate, y = reorder(voiv, Estimate)))+
+  geom_vline(xintercept = fixef(fit_null)[1,1], linetype = 2, colour="red")+
+  geom_point(colour="red")+
+  geom_errorbarh(aes(xmin=Q2.5, xmax=Q97.5), colour="red")+
+  geom_point(aes(x = raw_est, y= voiv), colour="blue", data=raw_est)+
+  ggtitle("Fitted values (vs. raw data) based on null model")+
+  labs(caption="Red dots and error-bars=fitted values; Blue dots=raw data",
+       y="Voivodeship", x="Conspiracy mentality")
+```
+
+## Random intercept model
+
+Now let's add an individual level predictor to our model. We will model it as a fixed effect (stable across clusters). We will still use fixed and random intercept. Note that `1` become the regression intercept (not the cluster level mean). 
+
+```{r}
+get_prior(mspi_z ~ 1 + pis + (1 | voiv),
+                    data=pps2,
+                    sample_prior = "yes")
+```
+
+Because the default prior for regression coefficient is flat, we will define a simple Normal prior instead.
+
+```{r}
+prior = set_prior("normal(0, 1)", class = "b")
+
+fit_rand_int <- brm(mspi_z ~ 1 + pis + (1 | voiv),
+                    data = pps2,
+                    prior = prior,
+                    sample_prior = "yes")
+```
+
+
+Let's print the model.
+
+```{r}
+fit_rand_int
+```
+
+Let's plot posterior distribution of random intercepts. These values are based on the fitted model.
+
+```{r}
+nd <-  crossing(pis = 0:1, voiv = unique(pps2$voiv))
+
+fitted_rand_int <- fitted(fit_rand_int, newdata = nd, summary=F)
+fitted_rand_int %>% 
+  as_tibble() %>% 
+  select(V1:V16) %>% 
+  set_names(unique(pps2$voiv)) %>% 
+  pivot_longer(everything(), names_to="voiv", values_to = "intercept") %>% 
+  ggplot(aes(x=intercept, y=reorder(voiv, intercept)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Random intercepts")+
+  ggtitle("Posterior distribution of random intercept")
+```
+
+Let's do the same for slopes. Note that because we modeled slope as fixed posterior will look the same for each voivodeship. 
+
+```{r}
+fitted_rand_int %>% 
+  as_tibble() %>% 
+  set_names(nd %>% unite("name",voiv:pis) %>% pull(name)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to="name", values_to = "values") %>% 
+  separate("name", c("voiv", "pis"), sep = "_") %>% 
+  pivot_wider(names_from = pis, values_from = values) %>% 
+  mutate(pis_slope = `1` - `0`) %>% 
+  ggplot(aes(x=pis_slope, y=reorder(voiv, pis_slope)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Fixed slope")+
+  ggtitle("Posterior distribution of fixed slopes")
+```
+
+
+## Random slope model
+
+Let's try another model. This time we will treat intercept as fixed and the slope both as fixed and random.
+
+```{r}
+fit_rand_slo <- brm(mspi_z ~ 1 + pis + (0 + pis | voiv),
+                    data = pps2,
+                    prior = prior,
+                    sample_prior = "yes")
+```
+
+Let's print the model. 
+
+```{r}
+fit_rand_slo
+```
+
+This time, when we plot intercepts, we note that they will have the same value for voivodeship.
+
+```{r}
+fitted_rand_slo <- fitted(fit_rand_slo, newdata = nd, summary=F)
+fitted_rand_slo %>% 
+  as_tibble() %>% 
+  select(V1:V16) %>% 
+  set_names(unique(pps2$voiv)) %>% 
+  pivot_longer(everything(), names_to="voiv", values_to = "intercept") %>% 
+  ggplot(aes(x=intercept, y=reorder(voiv, intercept)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Random intercepts")+
+  ggtitle("Posterior distribution of fixed intercept")
+```
+
+However, slopes (difference between PiS supporters and non-supporters) differs between voivodeships.
+
+```{r}
+fitted_rand_slo %>% 
+  as_tibble() %>% 
+  set_names(nd %>% unite("name",voiv:pis) %>% pull(name)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to="name", values_to = "values") %>% 
+  separate("name", c("voiv", "pis"), sep = "_") %>% 
+  pivot_wider(names_from = pis, values_from = values) %>% 
+  mutate(pis_slope = `1` - `0`) %>% 
+  ggplot(aes(x=pis_slope, y=reorder(voiv, pis_slope)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Random slope")+
+  ggtitle("Posterior distribution of random slopes")
+```
+
+## Random intercept-and-slope model
+
+Now, let's fit a model where both intercept and slope are modeled as both fixed and random effects.
+
+```{r}
+fit_rand_int_slo <- brm(mspi_z ~ 1 + pis + (1 + pis | voiv),
+                    data = pps2,
+                    prior = prior,
+                    sample_prior = "yes")
+```
+
+Let's print the results.
+
+```{r}
+fit_rand_int_slo
+```
+
+This time plotting will give as intercepts and slopes that differ between voivodeships
+
+```{r}
+fitted_rand_int_slo <- fitted(fit_rand_int_slo, newdata = nd, summary=F)
+fitted_rand_int_slo %>% 
+  as_tibble() %>% 
+  select(V1:V16) %>% 
+  set_names(unique(pps2$voiv)) %>% 
+  pivot_longer(everything(), names_to="voiv", values_to = "intercept") %>% 
+  ggplot(aes(x=intercept, y=reorder(voiv, intercept)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Random intercept")+
+  ggtitle("Posterior distribution of random intercept")
+```
+
+Because, we controlled for the baseline level (i.e., we added a random intercept) the slope varies a little bit less than in the random slope/fixed intercept model.
+
+```{r}
+fitted_rand_int_slo %>% 
+  as_tibble() %>% 
+  set_names(nd %>% unite("name",voiv:pis) %>% pull(name)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to="name", values_to = "values") %>% 
+  separate("name", c("voiv", "pis"), sep = "_") %>% 
+  pivot_wider(names_from = pis, values_from = values) %>% 
+  mutate(pis_slope = `1` - `0`) %>% 
+  ggplot(aes(x=pis_slope, y=reorder(voiv, pis_slope)))+
+  geom_density_ridges()+
+  labs(y="Voivodeship", x="Random slope")+
+  ggtitle("Posterior distribution of random slopes")
+```
+
+## Contextual effects 
+
+Finally, it's time to add a cluster level predictor. You can search through official databases to find variables such GDP, Gini, level of unemployment, etc. 
+
+I decided to choose a level of corruption. In the figure below, we see that there is quite a lot of variability in number of opened corruption cases between voivodeships. Can this be used as a predictor of conspiracy mentality?
+
+```{r}
+pps2 %>% 
+  group_by(voiv) %>% 
+  summarise(corrupt_z = unique(corrupt_z)) %>% 
+  ggplot(aes(x=corrupt_z, y=reorder(voiv, corrupt_z)))+
+  geom_col()+
+  labs(x="Voivodeship level of corruption (z-score)", y="Voivodeship")
+```
+
+Adding such a contextual predictor is easy. Note that we should not include 'corrupt_z' in the random part. This is because for each voivodeship, we have only one value of 'corrupt_z'. The model with random effects of 'corrupt_z' will be unidentifiable.
+
+```{r}
+fit_cont_eff <- brm(mspi_z ~ 1 + pis + corrupt_z + (1 + pis | voiv),
+                    data = pps2,
+                    prior = prior,
+                    sample_prior = "yes")
+```
+
+Let's print the results.
+
+```{r}
+fit_cont_eff
+```
+
+Level of corruptions seems to be unrelated to the average level of conspiracy mentality in the voivodeship.
+
+## Cross level interaction
+
+Let's fit another model, in which we test interaction of supporting PiS and level of corruption. This model will tell us to what extent level of corruption within a voivodeship can affect the relationship between supporting PiS and conspiracy mentality.
+
+```{r}
+fit_cross_int <- brm(mspi_z ~ 1 + pis * corrupt_z + (1 + pis | voiv),
+                    data = pps2,
+                    prior = prior,
+                    sample_prior = "yes")
+```
+
+Let's print the results.
+
+```{r}
+fit_cross_int
+```
+
+Let's plot the results to understand this interaction a little bit better.
+
+```{r}
+conditional_effects(fit_cross_int, "pis:corrupt_z", 
+                    int_conditions = list(corrupt_z = c(-1,1)),
+                    spaghetti = T, ndraw=100) %>% 
+  plot(line_args=list(colour=c("yellow")), plot=FALSE) %>% 
+  .[[1]]+
+  scale_x_continuous(breaks=0:1, labels = c("no","yes"))+
+  scale_colour_manual(values = c(alpha("blue", 0.15),alpha("red", 0.15)))+
+  labs(x="Voting for PiS", y="Conspiracy mentality (z-score)",
+       colour="Level of\ncorrupition\n(z-score)")
+```
+
+## Which model you should use?
+
+One way is to select the best model is to use LOOIC.
+
+```{r}
+loo_null <- loo(fit_null)
+loo_rand_int <- loo(fit_rand_int)
+loo_rand_slo <- loo(fit_rand_slo)
+loo_rand_int_slo <- loo(fit_rand_int_slo)
+loo_cont_eff <- loo(fit_cont_eff)
+loo_cross_int <- loo(fit_cross_int)
+```
+
+Based on LOOIC values it seems that the model with cross-level interaction has the best predictive accuracy.
+
+```{r}
+loo_null
+loo_rand_int
+loo_rand_slo
+loo_rand_int_slo
+loo_cont_eff
+loo_cross_int
+```
+
