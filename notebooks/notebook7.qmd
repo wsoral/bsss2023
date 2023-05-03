@@ -19,6 +19,9 @@ In today's class we will continue using data from the Polish Prejudice Survey 20
 ```{r}
 pps2 <- read_csv("data_files/pps2.csv")
 
+pps2 <- pps2 %>% 
+  na.omit()
+
 pps2 %>% 
   glimpse()
 ```
@@ -41,7 +44,7 @@ pps2 %>%
 ```
 
 Let's plot a distribution of participants' places of living. 
-In classical/Frequentist approach to multilevel modeling, we would expect to have at least 30 observations within each cluster (i.e., voivodeship) and more that 20 clusters (voivovedships). While the first condition is satisfied, the second is impossible to meet. 
+In classical/Frequentist approach to multilevel modeling, we would expect to have at least 30 observations within each cluster (i.e., voivodeship) and more that 20 clusters (voivovedships). While the first condition seems to be satisfied for most cases, the second is impossible to meet. 
 We could change voivodeships to counties (powiaty), but then number of observations within each cluster would be well below 30.
 A better approach is to use Bayesian multilevel models, which are more robust to small number of clusters (see, Stegmueller, D. (2013). How many countries for multilevel modeling? A comparison of frequentist and Bayesian approaches. American Journal of Political Science, 57(3), 748-761.)
 
@@ -127,7 +130,7 @@ Let's compute the ICC.
 between_cluster_sd^2 / (between_cluster_sd^2 + within_cluster_sd^2)
 ```
 
-Or you can use some predefined function (you should have a package `performace` installed to run the code below)
+Or you can use some predefined function (you should have a package `performace` installed to run the code below).
 
 ```{r}
 performance::icc(fit_null)
@@ -407,5 +410,16 @@ loo_rand_slo
 loo_rand_int_slo
 loo_cont_eff
 loo_cross_int
+```
+
+We see that while the cross-interaction model has the lowest LOOIC, the difference (with respect to its SE) with this and other model is not particularly large.
+
+```{r}
+loo_compare(loo_null,
+loo_rand_int,
+loo_rand_slo,
+loo_rand_int_slo,
+loo_cont_eff,
+loo_cross_int)
 ```
 
