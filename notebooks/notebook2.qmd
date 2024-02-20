@@ -6,14 +6,13 @@ editor: visual
 
 ## Working with posterior objects
 
-Posterior objects are just arrays with some additional information included. Here, we load and print an example posterior object.
-Assume that this posterior describes effects of some experimental treatment (i.e., we want to know whether the treatment vs. control had any effect on DV). Numbers represent samples from the posterior distribution of the standardized difference.
+Posterior objects are just arrays with some additional information included. Here, we load and print an example posterior object. Assume that this posterior describes effects of some experimental treatment (i.e., we want to know whether the treatment vs. control had any effect on DV). Numbers represent samples from the posterior distribution of the standardized difference.
 
 ```{r}
 posterior <- readRDS("data_files/c2_posterior.rds")
 posterior
 ```
- 
+
 As you can see below posterior is just a long list of numbers.
 
 ```{r}
@@ -45,8 +44,7 @@ mcmc_dens(posterior)
 
 ## Point estimates
 
-Because posterior is just a list of numbers it can be easily summarised with any function that you use for descriptive statistics in R.
-For example, to obtain posterior mean, we simply write:
+Because posterior is just a list of numbers it can be easily summarised with any function that you use for descriptive statistics in R. For example, to obtain posterior mean, we simply write:
 
 ```{r}
 mean(posterior)
@@ -97,8 +95,7 @@ p_direction(posterior)
 
 It is possible that the effect exist.
 
-You can also plot the results.
-*as.numeric* is workaround used here because there is no model object in the namespace. Later, when we will fit models with *brms* it will not be necessary.
+You can also plot the results. *as.numeric* is workaround used here because there is no model object in the namespace. Later, when we will fit models with *brms* it will not be necessary.
 
 ```{r}
 plot(p_direction(as.numeric(posterior)))
@@ -108,7 +105,7 @@ plot(p_direction(as.numeric(posterior)))
 
 Finally, we can test whether the effect is significant by testing to what extent the posterior overlaps with the region of practical equivalence.
 
-Because the DV was standardized, we can assume that differences smaller than |0.10| are negligible (i.e., very small values of Cohen's d).
+Because the DV was standardized, we can assume that differences smaller than \|0.10\| are negligible (i.e., very small values of Cohen's d).
 
 ```{r}
 rope(posterior, range = c(-0.10, 0.10))
@@ -138,16 +135,15 @@ describe_posterior(posterior)
 
 Or you can use a function `sexit` which is an acronym for sequential effect existence and significance testing.
 
-Here, I used a threshold of |.1| to reflect effects that are significant (vs. negligible) and threashold of |.8| to reflect effects that are large.
+Here, I used a threshold of \|.1\| to reflect effects that are significant (vs. negligible) and threashold of \|.8\| to reflect effects that are large.
 
 ```{r}
 sexit(posterior, significant = 0.1, large = 0.8)
 ```
 
-
 ## Testing more refined hypotheses.
 
-You can also test more refined research hypotheses. 
+You can also test more refined research hypotheses.
 
 For example, what is chance that the effect is larger than 0.5?
 
@@ -161,7 +157,6 @@ The same result can be obtained with `mean`
 mean(posterior > 0.5)
 ```
 
-
 What is a chance the effect lies in an interval from 0.10 to 0.30?
 
 ```{r}
@@ -169,4 +164,3 @@ mean(posterior > 0.1 & posterior < 0.3)
 ```
 
 More on that later...
-
