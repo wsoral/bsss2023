@@ -21,14 +21,14 @@ editor: visual
 2.  Intro to MCMC: analysis of MCMC draws (29-Feb-24)
 3.  Intro to MCMC: Bayesian workflow, using *brms* (07-Mar-24)
 4.  Bayesian linear models: simple and polynomial regression, categorical predictors (14-Mar-24)
-5.  Bayesian linear models: interactions (21-Mar-24)
-6.  Bayesian generalized linear models (04-Apr-24)
-7.  Bayesian multilevel models (11-Apr-24)
-8.  Final exam (18-Apr-24)
+5.  Bayesian linear models: interactions (04-Apr-24)
+6.  Bayesian generalized linear models (11-Apr-24)
+7.  Bayesian multilevel models (18-Apr-24)
+8.  Final exam (25-Apr-24)
 
 ## Assessment methods:
 
--   Final exam (18-Apr-24)
+-   Final exam (25-Apr-24)
 
 -   Home assignments (6 assignments)
 
