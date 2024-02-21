@@ -15,16 +15,4 @@ editor: visual
 
 
 
-## Home assignment
-
--   Read parts of chapter 2 in McElreath, "Statistical Rethinking" (pp. 19 - 41, without "Quadratic approximation")
--   Recall the globe tossing model from the chapter. Compute and plot the grid approximate posterior distribution for each of the following sets of observations. In each case, assume a uniform prior for p.
-1. W,W,W
-2. W,W,W,L
-3. L,W,W,L,W,W,W
-- Now assume a prior for p that is equal to zero when p < 0.5 and is a positive constant when p ≥ 0.5. Again compute and plot the grid approximate posterior distribution for each of the sets of observations in the problem just above.
--   Send the solution as a .qmd file.
--   **Deadline:** 28-Feb-24 11:59PM
-
-
 
