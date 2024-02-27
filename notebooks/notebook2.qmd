@@ -4,24 +4,22 @@ format: html
 editor: visual
 ---
 
-## Working with posterior objects
+## Working with posterior (MCMC) objects
 
-Posterior objects are just arrays with some additional information included. Here, we load and print an example posterior object. Assume that this posterior describes effects of some experimental treatment (i.e., we want to know whether the treatment vs. control had any effect on DV). Numbers represent samples from the posterior distribution of the standardized difference.
+Most of your work during this class will involve working with posteriors estimated using simulated MCMC draws.
+These MCMC draws are stored in array-like R objects. These arrays contain a list of values for each parameter in a model.
+
+We will begin by loading and taking a quick look at such an array with posterior of 1 parameter. Assume that this parameter reflects an effect of some experimental treatment (i.e., we want to know whether the treatment vs. control had any effect on DV). Numbers represent samples from the posterior distribution of the standardized difference.
 
 ```{r}
 posterior <- readRDS("data_files/c2_posterior.rds")
 posterior
 ```
 
-As you can see below posterior is just a long list of numbers.
-
-```{r}
-head(as.numeric(posterior), n = 100)
-```
 
 ## Plotting posterior distribution
 
-There are many ways to plot posterior distribution. You can use basic plotting utilities or *ggplot2*. For convenience and consistency with future classes, we will use an R package *bayesplot*.
+There are many ways to visualize posterior distribution. You can use basic plotting utilities or *ggplot2*. Here, e will use an R package *bayesplot*.
 
 Posterior can be plotted as a traceplot using a function `mcmc_trace`. Note that all plotting functions in *bayesplot* start with `mcmc_` and end with a plot type.
 
@@ -29,6 +27,9 @@ Posterior can be plotted as a traceplot using a function `mcmc_trace`. Note that
 library(bayesplot)
 mcmc_trace(posterior)
 ```
+
+X-axis represent draw id, Y-axis represent draw value.
+
 
 Another helpful plot is a histogram (`mcmc_hist`).
 
@@ -44,7 +45,7 @@ mcmc_dens(posterior)
 
 ## Point estimates
 
-Because posterior is just a list of numbers it can be easily summarised with any function that you use for descriptive statistics in R. For example, to obtain posterior mean, we simply write:
+Because the posterior estimated using MCMC sample is just a list of numbers, it can be easily summarized with any function that you use for descriptive statistics in R. For example, to obtain posterior mean, we simply write:
 
 ```{r}
 mean(posterior)
@@ -83,46 +84,54 @@ To obtain highest density intervals use a function `hdi` from *bayestestR*.
 hdi(posterior)
 ```
 
-We can now see that there is some uncertainty with regards to the size of experimental treatment. We cannot entirely exclude that the effect is negative or very small.
+We can now see that there is some uncertainty with regards to the size of experimental treatment. We cannot entirely exclude that the effect is very small nor that it is large.
 
 ## Existence
 
-To do a more formal test of whether the effect exist, we can use `p_direction` from *bayestestR*. It tests what is the probability that the direction of the effect is consistent with the point estimate of the effect.
+To do a more formal test of whether the effect exists, we can use `p_direction` from *bayestestR*. It tests what is the probability that the direction of the effect is consistent with the point estimate of the effect.
 
 ```{r}
 p_direction(posterior)
 ```
 
-It is possible that the effect exist.
+It is likely that the effect exist.
 
-You can also plot the results. *as.numeric* is workaround used here because there is no model object in the namespace. Later, when we will fit models with *brms* it will not be necessary.
+You can also plot the results. Note that we need to provide an actual fit if we want this plotting function to run.
 
 ```{r}
-plot(p_direction(as.numeric(posterior)))
+fit <- readRDS("data_files/c2_fit.rds")
+
+plot(p_direction(fit))
 ```
 
 ## Significance
 
-Finally, we can test whether the effect is significant by testing to what extent the posterior overlaps with the region of practical equivalence.
+Finally, we can test whether the effect is significant by testing to what extent the posterior overlaps with the region of practical equivalence (ROPE).
 
 Because the DV was standardized, we can assume that differences smaller than \|0.10\| are negligible (i.e., very small values of Cohen's d).
 
-```{r}
-rope(posterior, range = c(-0.10, 0.10))
-```
-
-Here, we are uncertain whether we can or we cannot reject null hypothesis that the effect is within the range of (-0.10, 0.10).
-
-We can see it better using a plot.
+We can see the result better using a plot.
 
 ```{r}
-plot(rope(as.numeric(posterior), range = c(-0.10, 0.10)))
+plot(rope(fit, range = c(-0.10, 0.10)))
 ```
+
+We see that:
+1) 95% CI and ROPE overlap to some extent, thus we cannot exclude that the effect is very small.
+2) 100% CI ROPE overlap more than 2.5%, thus we cannot exclude that the effect is very small
+
+
 
 Another way to conduct analysis with this approach is by using a function `equivalence_test`.
 
+The first approach (inside ROPE should be 0, 100):
 ```{r}
-equivalence_test(posterior, range = c(-0.1, 0.1))
+equivalence_test(posterior, range = c(-0.1, 0.1), ci=.95)
+```
+
+The second approach (inside ROPE should be smaller than 2.5% or greater than 97.5%):
+```{r}
+equivalence_test(posterior, range = c(-0.1, 0.1), ci=1)
 ```
 
 ## Putting it all together.
