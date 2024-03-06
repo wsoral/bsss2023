@@ -7,6 +7,7 @@ editor: visual
 Let's start with loading the required packages.
 
 ```{r}
+library(ggplot2)
 library(brms)
 library(bayesplot)
 library(bayestestR)
@@ -22,7 +23,9 @@ head(df)
 Let's look at the histogram of the values.
 
 ```{r}
-hist(df$deltaRT, main = "Histogram of delta RT", xlab = "delta RT")
+ggplot(df, aes(x=deltaRT))+
+  geom_histogram()+
+  labs(title = "Histogram of delta RT", x="delta RT")
 ```
 
 # Define model and priors
@@ -51,7 +54,7 @@ get_prior(formula = deltaRT ~ 0 + Intercept,
           family = gaussian)
 ```
 
-Lets create prior object. Use `set_prior` to set priors. Use `c()` to concatenate priors for different parameters.
+Let's create a prior object. Use `set_prior` to set priors. Use `c()` to concatenate priors for different parameters.
 
 ```{r}
 priors <- c(
@@ -60,7 +63,18 @@ priors <- c(
 )
 ```
 
-Now lets fit the model with prior samples only to verify that our prior choice is reasonable.
+Lets check how this prior will look like with our model.
+
+
+```{r}
+validate_prior(prior=priors,
+               deltaRT ~ 0 + Intercept,
+               data = df,
+               family = gaussian)
+```
+
+
+Now let's fit the model with prior samples only to verify that our prior choice is reasonable.
 
 ```{r}
 fit_prior <- brm(formula = deltaRT ~ 0 + Intercept,
@@ -73,12 +87,12 @@ fit_prior <- brm(formula = deltaRT ~ 0 + Intercept,
 Use `pp_check` with `fit_prior` to conduct prior predictive checks.
 
 ```{r}
-pp_check(fit_prior, ndraws=20)
+pp_check(fit_prior, draw_ids = 1:20)
 ```
 
 ## Fit the model
 
-Now lets fit our first model. Note that there is no need to define number of iterations number of draws, or warmup period. We can use the default values.
+Now let's fit our first model. Note that there is no need to define number of iterations number of draws, or warmup period. We can use the default values.
 
 ```{r}
 fit1 <- brm(formula = deltaRT ~ 0 + Intercept,
@@ -166,7 +180,8 @@ get_prior(formula = deltaRT ~ 0 + Intercept,
 How does Gamma prior distribution look like?
 
 ```{r}
-curve(dgamma(x, 2, 0.01), from = 1, to=120)
+ggplot()+
+  stat_function(fun = dgamma, xlim=c(1, 120), args = list(shape=2, rate = .01))
 ```
 
 ```{r}
