@@ -15,7 +15,14 @@ library(ggplot2)
 theme_set(theme_classic())
 ```
 
-We will load a dataset. This data are the results of an experiment which tested how arousing control motivation affect vaccination intentions. - cond - experimental condition: - Base = baseline condition (participants read a vignette about benefits) - Rest = control restoration condition (participants read a vignette about how vaccines can allow people for control restoration) - vaccination - intentions to vaccinate against several diseases - gender - participant's gender - age - participant's age - place - place of living (rural vs. urban)
+We will load a dataset. This data are the results of an experiment which tested how arousing control motivation affect vaccination intentions. 
+- cond - experimental condition: 
+  - Base = baseline condition (participants read a vignette about benefits) 
+  - Rest = control restoration condition (participants read a vignette about how vaccines can allow people for control restoration) 
+- vaccination - intentions to vaccinate against several diseases 
+- gender - participant's gender 
+- age - participant's age 
+- place - place of living (rural vs. urban)
 
 ```{r}
 vacc <- read.csv2("data_files/exp_vaccines.csv")
@@ -69,6 +76,15 @@ priors1 <- c(
 )
 ```
 
+
+```{r}
+validate_prior(
+  formula = z_vacc ~ cond,
+  data = vacc,
+  prior = priors1)
+```
+
+
 Let's fit the model with `brm`. In most cases, I recommend setting `sample_prior` to TRUE. This will give us additional options later.
 
 ```{r}
@@ -111,7 +127,46 @@ get_prior(
 )
 ```
 
-Kruschke suggests to set prior for group means ($\mu$) to Normal distribution with mean equal to sample mean and standard deviation equal to sample SD x 100. Moreover, he suggests to set prior for group standard deviations (dpar=distributional parameter, $\sigma$) to HalNormal distribution with mean equal to 0 and standard deviation equalt sample SD. Because in brms $\sigma$ is always used on a log-scale, we need to input logged sample SD. Finally, he suggests to set prior for degrees of freedom ($\nu$) of the Student distribution of groups' results to Exponential with rate parameters set to 1/29.
+Kruschke suggests to set prior for group means ($\mu$) to Normal distribution with mean equal to sample mean and standard deviation equal to sample SD x 100. 
+
+Moreover, he suggests to set prior for within-group spread of observations (dpar=distributional parameter, $\sigma$) to HalNormal distribution with mean equal to 0 and standard deviation equal to sample SD. Because in brms $\sigma$ is always used on a log-scale, we need to input logged sample SD. 
+
+
+```{r}
+library(tidyverse)
+d <-
+  crossing(y  = seq(from = -8, to = 8, length.out = 1e3),
+           nu = c(Inf, 5, 2, 1)) %>%
+  mutate(label = str_c("nu == ", nu) %>% 
+           factor(., levels = c("nu == Inf", "nu == 5", "nu == 2", "nu == 1")))
+
+# the subplot
+p1 <-
+  d %>% 
+  ggplot(aes(x = y)) +
+  geom_area(aes(y = dt(y, df = nu)),
+            fill = "#737A82") +
+  geom_area(data = . %>% filter(y >= -1 & y <= 1),
+            aes(y = dt(y, df = nu)),
+            fill = "#484D53") +
+  # note how this function has its own data
+  geom_text(data = tibble(
+    y     = 0,
+    text  = c("68%", "64%", "58%", "50%"),
+    label = factor(c("nu == Inf", "nu == 5", "nu == 2", "nu == 1"))),
+    aes(y = .175, label = text),
+    color = "white") +
+  scale_y_continuous(expression(p(y)), expand = expansion(mult = c(0, 0.05)), breaks = c(0, .2, .4)) +
+  labs(subtitle = "Shaded from y = - 1 to y = 1") +
+  coord_cartesian(xlim = c(-6, 6)) +
+  facet_wrap(~ label, ncol = 1, labeller = label_parsed)
+p1
+```
+
+
+Finally, he suggests to set prior for degrees of freedom ($\nu$) of the Student distribution of groups' results to Exponential with rate parameters set to 1/29.
+The mean of exponential distribution is 1/rate. Thus, the mean of prior for degrees of freedom will be set to 29. 
+Recall that Student distribution with 30 or more DF is approximately Normal. We want to give the same weights to Normal and non-Normal distributions.
 
 The template for prior definition is:
 
@@ -121,7 +176,7 @@ c(prior(normal(mean_y, sd_y * 100), class = b),
   prior(exponential(one_over_twentynine), class = nu))
 ```
 
-There are more elegant ways coding this prior, but for the sake of simplity, we will simply compute each hyperparameter value and put it into our code.
+There are more elegant ways coding this prior, but for the sake of simplcity, we will simply compute each hyperparameter value and put it into our code.
 
 Sample mean
 
@@ -154,6 +209,16 @@ fit2_priors <- c(prior(normal(4.924107, 148.6153), class = b),
                 prior(normal(0, 0.3961912), class = b, dpar = sigma),
                 prior(exponential(0.03448276), class = nu))
 ```
+
+```{r}
+validate_prior(
+  formula = fit2_formula,
+  data = vacc,
+  family = student,
+  fit2_priors
+)
+```
+
 
 Let's fit the model with `brm`.
 
@@ -241,6 +306,16 @@ priors3 <- c(
 )
 ```
 
+
+```{r}
+validate_prior(
+  formula = z_vacc ~ zAge,
+  data = vacc,
+  prior = priors3
+)
+```
+
+
 Let's fit the model with `brm`.
 
 ```{r}
@@ -317,7 +392,11 @@ get_prior(
 )
 ```
 
-Following Kruschke's recommendations, we will set: - prior for the intercept to Normal(0, 10) - prior for the slope to Normal(0, 10) - prior for residual standard deviation to HalfNormal(0, 1) - prior for degrees of freedom of the Student likelihood to Exponential(1/29)
+Following Kruschke's recommendations, we will set: 
+- prior for the intercept to Normal(0, 10) 
+- prior for the slope to Normal(0, 10) 
+- prior for residual standard deviation to HalfNormal(0, 1) 
+- prior for degrees of freedom of the Student likelihood to Exponential(1/29)
 
 ```{r}
 priors4 <- c(prior(normal(0, 10), class = Intercept),
@@ -325,6 +404,16 @@ priors4 <- c(prior(normal(0, 10), class = Intercept),
             prior(normal(0, 1), class = sigma),
             prior(exponential(0.03448276), class = nu))
 ```
+
+```{r}
+validate_prior(
+  formula = z_vacc ~ zAge,
+  data = vacc,
+  family = student,
+  prior = priors4
+)
+```
+
 
 Let's fit the model with `brm`.
 
@@ -429,7 +518,7 @@ bayes_R2(fit5)
 
 ## Comparing models using information criteria
 
-We can use information criteria to account for the model complexity and overfitting.
+We can use information criteria to account for the model complexity and over fitting.
 
 Let's compute LOO (leave-one-out) information criterion for the linear model.
 

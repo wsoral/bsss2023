@@ -65,14 +65,12 @@ priors <- c(
 
 Lets check how this prior will look like with our model.
 
-
 ```{r}
 validate_prior(prior=priors,
                deltaRT ~ 0 + Intercept,
                data = df,
                family = gaussian)
 ```
-
 
 Now let's fit the model with prior samples only to verify that our prior choice is reasonable.
 
