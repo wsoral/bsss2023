@@ -17,7 +17,12 @@ theme_set(theme_classic())
 
 Let's load the data set. These are the results of a recent experimental study.
 
-Participants were exposed repeatedly to a number of online comments. - Participants in the neutral condition were asked to read neutral comments. - Participants in the hateful condition were asked to read hateful comments against Maldzurs. - After reading the comments, participants were asked to read 5 stories about something bad happening to a Maldzur. They were asked to rate to what extent they feel contempt toward the Maldzur (on a scale from 1 = low intensity to 7 = high intensity). - Additionally, all participants were asked rate a set of 3 hateful comments against Maldzurs, on a scale from 1 (not offensive at all) to 7 (definitely offensive).
+Participants were exposed repeatedly to a number of online comments. 
+
+- Participants in the neutral condition were asked to read neutral comments. 
+- Participants in the hateful condition were asked to read hateful comments against Maldzurs. 
+- After reading the comments, participants were asked to read 5 stories about something bad happening to a Maldzur. They were asked to rate to what extent they feel contempt toward the Maldzur (on a scale from 1 = low intensity to 7 = high intensity). 
+- Additionally, all participants were asked rate a set of 3 hateful comments against Maldzurs, on a scale from 1 (not offensive at all) to 7 (definitely offensive).
 
 We were interested whether exposure to hateful (vs. neutral) comments will affect intensity of contempt. Additionally, we were interested whether sensitivity to hate speech will be related to intensity of contempt.
 
@@ -65,6 +70,15 @@ You can also assign separate priors to weights for each predictor.
 priors <- c(
   set_prior("normal(0, 1)", class="b", coef="condneutral"),
   set_prior("normal(0, 1)", class="b", coef="z_hs_sens")
+)
+```
+
+
+```{r}
+validate_prior(
+  formula = z_contempt ~ cond + z_hs_sens,
+  data = hate,
+  prior = priors
 )
 ```
 
@@ -162,7 +176,7 @@ Let's include an interaction term now.
 ```{r}
 get_prior(
   formula = z_contempt ~ cond + z_hs_sens + cond:z_hs_sens,
-  data = hate,
+  data = hate
 )
 ```
 
@@ -173,6 +187,15 @@ priors <- c(
   set_prior("normal(0, 1)", class="b", coef="condneutral"),
   set_prior("normal(0, 1)", class="b", coef="z_hs_sens"),
   set_prior("normal(0, 1)", class="b", coef="condneutral:z_hs_sens")
+)
+```
+
+
+```{r}
+validate_prior(
+  formula = z_contempt ~ cond + z_hs_sens + cond:z_hs_sens,
+  data = hate,
+  prior = priors
 )
 ```
 
@@ -192,7 +215,10 @@ Let's print the results. **Remember that in before looking at the results you sh
 fit_1
 ```
 
-Note that regression coefficients for 'condneutral' and 'z_hs_sens' have a specific meaning here. They should not be confused with main effects (as in traditional ANOVA). Each of these values tells us the effect of a predictor at the value of another predictor set to 0. That is: - condneutral is the difference between contempt means in neutral and hateful conditions for participants with the level of 'z_hs_sens' = 0 - z_hs_sens is the slope for 'z_hs_sens' for participants with the level of 'cond' = 0 (i.e., in hateful condition) We will see how to probe interaction (test effects at other values of the other variable) in second.
+Note that regression coefficients for 'condneutral' and 'z_hs_sens' have a specific meaning here. They should not be confused with main effects (as in traditional ANOVA). Each of these values tells us the effect of a predictor at the value of another predictor set to 0. 
+That is: 
+- condneutral is the difference between contempt means in neutral and hateful conditions for participants with the level of 'z_hs_sens' = 0 
+- z_hs_sens is the slope for 'z_hs_sens' for participants with the level of 'cond' = 0 (i.e., in hateful condition) We will see how to probe interaction (test effects at other values of the other variable) in second.
 
 # Comparing models
 
@@ -364,7 +390,7 @@ emmeans(fit_1,
 Let's start by creating grid of predictor values. We will use 13 evenly spaced values at the spectrum of 'z_hs_sens'.
 
 ```{r}
-n_hsSens_values <- 13    
+n_hsSens_values <- 26    
 
 nd <- crossing(cond   = c("neutral","hateful"),
                z_hs_sens = seq(from = -2.4144, to = 1.9261, length.out = n_hsSens_values))
@@ -389,21 +415,32 @@ f
 
 After some data manipulation, we will have a dataframe with 13 (number of values of 'z_hs_sens') x 4000 (number of posterior draws) = 52000.
 
+
 Now we can plot the results.
 
 ```{r}
 f %>% 
-  ggplot(aes(x = z_hs_sens %>% round(digits = 2) %>%  as.factor(), y = difference)) +
+  ggplot(aes(x = z_hs_sens %>% round(digits = 2), y = difference)) +
   geom_hline(yintercept = 0, color = "red") +
-  geom_violin(linewidth = 0, fill = "blue", alpha=2/3) +
+  geom_violin(aes(group=z_hs_sens),linewidth = 0, fill = "blue", alpha=2/3) +
   stat_summary(fun = median,
                fun.min = function(x){quantile(x, probs = .025)},
                fun.max = function(x){quantile(x, probs = .975)},
                color = "red") +
   labs(x = expression(paste("HS sensitivity (", italic(W), ")")),
        y = expression(atop(theta[paste(italic(X), " on ", italic(Y))], paste("Conditional Effect of Exposure to HS"))))
-
 ```
+
+How to find a value of W at which the effect of X on Y is credible?
+
+```{r}
+f %>% 
+  group_by(z_hs_sens) %>% 
+  mean_qi(difference) %>% 
+  filter(.lower > 0) %>% 
+  arrange(desc(z_hs_sens))
+```
+
 
 We can also create another plot for an infinite number of moderator values. I am using a `median_qi` function from `tidybayes`. You can try to install this package and run this chunk of code at home.
 
@@ -414,7 +451,6 @@ f %>%
   median_qi(difference) %>% 
   ggplot(aes(x = z_hs_sens)) +
   geom_hline(yintercept = 0, color = "gray20") +
-  geom_vline(xintercept = 0.34, color = "gray20") +
   geom_ribbon(aes(ymin = .lower, ymax = .upper),
               fill = "blue",
               alpha = 1/2) +
@@ -424,8 +460,7 @@ f %>%
  # coord_cartesian(xlim = c(1, 6),
 #                  ylim = c(-1, 1.5)) +
   labs(x = expression(paste("HS sensitivity (", italic(W), ")")),
-       y = expression(atop(theta[paste(italic(X), " on ", italic(Y))], paste("Conditional Effect of Exposure to Hate Speech")))) +
-  theme_gray()
+       y = expression(atop(theta[paste(italic(X), " on ", italic(Y))], paste("Conditional Effect of Exposure to Hate Speech"))))
 ```
 
 We can see more clearly, that interaction can understood as a linear effect of moderator on the size of another effect in regression.
@@ -454,7 +489,7 @@ Let's fit a model.
 fit_mediate <- brm(
     formula = f1 + f2 + set_rescor(FALSE),
     data = hate,
-    prior = priors
+    prior = prior(normal(0, 1), class = b)
 )
 ```
 

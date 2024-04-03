@@ -63,7 +63,7 @@ Always think about defining prior.
 
 ```{r}
 get_prior(
-  formula = z_vacc ~ cond,
+  formula = z_vacc ~ 1 + cond,
   data = vacc
 )
 ```
@@ -79,7 +79,7 @@ priors1 <- c(
 
 ```{r}
 validate_prior(
-  formula = z_vacc ~ cond,
+  formula = z_vacc ~ 1 + cond,
   data = vacc,
   prior = priors1)
 ```
@@ -107,6 +107,12 @@ Let's test the hypothesis that the difference between conditions is 0.
 ```{r}
 hypothesis(fit1, "condRest = 0")
 ```
+
+
+```{r}
+sexit(fit1)
+```
+
 
 ### Kruschke's approach (BEST = Bayesian estimation supersedes t-test)
 
