@@ -32,8 +32,8 @@ theme_07 <- theme_gray() +
 
 d <- crossing(x = -1:2,
               w = 0:2) %>% 
-  mutate(A = 4 + 1 * x + 2 * w,
-         B = 4 + 1 * x + 2 * w + 1.5 * x * w)
+  mutate(A = 4 + 2 * x + 3 * w,
+         B = 4 + 2 * x + 3 * w - 2 * x * w)
 
 d %>% 
   pivot_longer(A:B, values_to = "y") %>% 
@@ -57,6 +57,22 @@ d %>%
   theme_07+
   theme(legend.position = "none")
 ```
+
+## Unconditional and conditional effects in regression
+
+```{r}
+d %>% 
+  pivot_longer(A:B, values_to = "y") %>% 
+  mutate(strip = if_else(name == "A",
+                         "A: where W is a covariate",
+                         "B: where W is a moderator")) %>% 
+  ggplot(aes(x = x, y = w, z = y))+
+  facet_wrap(~strip)+
+  geom_contour_filled(aes(colour=..level.., fill = ..level..), bins=30)+
+  theme_07+
+  theme(legend.position = "none")
+```
+
 
 ## W as a covariate
 
