@@ -27,10 +27,10 @@ This is a subset of Polish Prejudice Survey 2021, a nationally representative su
 
 ## Regression with a dichotomous predicted variable
 
-In this example, we will use two variables: 
+In this example, we will use two variables:
 
-- vacc - whether a person is vaccinated against COVID-19 (0 = no, 1 = yes) 
-- mspi - average score of the Conspiracy Mentality Scale
+-   vacc - whether a person is vaccinated against COVID-19 (0 = no, 1 = yes)
+-   mspi - average score of the Conspiracy Mentality Scale
 
 We want to test - in a retrospective manner - whether conspiracy mentality is a predictor of getting a vaccination.
 
@@ -82,14 +82,16 @@ If we would like to conduct SEXIT tests, we need to find values of log-odds that
 
 Funder and Ozer (2019) suggest that effects such small as r = .05 (d = 0.1001) can have be potentially consequential in the not-very-long run. Thus, smaller values can be treated as practically non-significant. Furthermore, they suggest that r = .30 (d = 0.629) should be regarded as a large effect size. How to get values of lnOR from these values?
 
-You can use this formulas: 
+You can use this formula:
 
 $$
 lnOR = \frac{\pi}{\sqrt{3}} * d_{Cohen}
-$$ 
+$$
+
+Or this to do a reverse computation:
 
 $$
-d_{Cohen} = \frac{\pi}{\sqrt{3}} * lnOR
+d_{Cohen} = \frac{\sqrt{3}}{\pi} * lnOR
 $$
 
 Using these formulas we set threashold for significance to .18, and a threshold for a large effect to 1.14.
@@ -123,9 +125,10 @@ avg_slopes(logistic_fit)
 ## Regression with a ordinal predicted variable
 
 In this example, we will use two variables: 
-- dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject) 
 
-- disg_sens - average score of a scale measuring sensitivity to several disgusting stimuli (rotten vegetables, vomits et al.)
+- dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject)
+
+-   disg_sens - average score of a scale measuring sensitivity to several disgusting stimuli (rotten vegetables, vomits et al.)
 
 We can treat disg_sens as a continuous variable.
 
@@ -290,14 +293,13 @@ hypothesis(cumulative_fit, "exp(disg_sens) = 0")
 avg_slopes(cumulative_fit)
 ```
 
-
 ## Regression with a nominal predicted variable
 
-In this final example, we will use two variables: 
+In this final example, we will use two variables:
 
-- party - political party preferences (ruling party = PiS, opposition = (KO, Lewica, PSL, PL2050), radicals = (Konfederacja, Kukiz), other = smaller parties, nonVote = non voting) 
+-   party - political party preferences (ruling party = PiS, opposition = (KO, Lewica, PSL, PL2050), radicals = (Konfederacja, Kukiz), other = smaller parties, nonVote = non voting)
 
-- sys_jus - average score of System Justification Scale
+-   sys_jus - average score of System Justification Scale
 
 We will investigate whether system justification can be used to predict party preferences.
 
@@ -330,11 +332,11 @@ fit_categorical <- brm(
 )
 ```
 
-The results in the table are extremely difficult to interpret. 
+The results in the table are extremely difficult to interpret.
 
-- First, they are on the log-odds scale. 
+-   First, they are on the log-odds scale.
 
-- Second, they represent change in odds relative to the reference category (the one that is not included in the table, here "nonVoting").
+-   Second, they represent change in odds relative to the reference category (the one that is not included in the table, here "nonVoting").
 
 ```{r}
 fit_categorical
