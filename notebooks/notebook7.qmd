@@ -26,13 +26,14 @@ pps2 %>%
   glimpse()
 ```
 
-We will be interested in modeling conspiracy mentality:
+We will be interested in modeling conspiracy mentality: 
+
 - mspi_z - standardized responses to a scale of items about politics being ruled by conspiracies
 
-We will investigate a set of predictors:
-- voiv - voivodeship (16 values), we expect that there are substantial differences in conspiracy mentality between voivodeships
-- pis - being a Prawo i Sprawidliość supporter (1) or not (0); this is an individual-level predictor
-- corrupt_z - level of corruption within a voivodeship assessed via the number of investigated corruption cases in a voivdeship; this is voivodeship-level predictor
+We will investigate a set of predictors: 
+- voiv - voivodeship (16 values), we expect that there are substantial differences in conspiracy mentality between voivodeships 
+- pis - being a Prawo i Sprawidliość supporter (1) or not (0); this is an individual-level predictor 
+- corrupt_z - level of corruption within a voivodeship assessed via the number of investigated corruption cases in a voivodeship; this is voivodeship-level predictor
 
 Let's plot the outcome variable:
 
@@ -43,10 +44,7 @@ pps2 %>%
   labs(x="Conspiracy mentality (z-score)", y="Count")
 ```
 
-Let's plot a distribution of participants' places of living. 
-In classical/Frequentist approach to multilevel modeling, we would expect to have at least 30 observations within each cluster (i.e., voivodeship) and more that 20 clusters (voivovedships). While the first condition seems to be satisfied for most cases, the second is impossible to meet. 
-We could change voivodeships to counties (powiaty), but then number of observations within each cluster would be well below 30.
-A better approach is to use Bayesian multilevel models, which are more robust to small number of clusters (see, Stegmueller, D. (2013). How many countries for multilevel modeling? A comparison of frequentist and Bayesian approaches. American Journal of Political Science, 57(3), 748-761.)
+Let's plot a distribution of participants' places of living. In classical/Frequentist approach to multilevel modeling, we would expect to have at least 30 observations within each cluster (i.e., voivodeship) and more that 20 clusters (voivovedships). While the first condition seems to be satisfied for most cases, the second is impossible to meet. We could change voivodeships to counties (powiaty), but then number of observations within each cluster would be well below 30. A better approach is to use Bayesian multilevel models, which are more robust to small number of clusters (see, Stegmueller, D. (2013). How many countries for multilevel modeling? A comparison of frequentist and Bayesian approaches. American Journal of Political Science, 57(3), 748-761.)
 
 ```{r}
 pps2 %>% 
@@ -56,8 +54,7 @@ pps2 %>%
   labs(y="Voivodeship", x="Count")
 ```
 
-Let's plot a distribution of an individual level predictor: voting for PiS.
-Note that despite we are dealing with a categorical variable I coded it as a numeric type rather a factor. This is the only correct way to model random categorical variable effects in `brms`. 
+Let's plot a distribution of an individual level predictor: voting for PiS. Note that despite we are dealing with a categorical variable I coded it as a numeric type rather a factor. This is the only correct way to model random categorical variable effects in `brms`.
 
 ```{r}
 pps2 %>% 
@@ -68,7 +65,6 @@ pps2 %>%
   labs(x="Voting for PiS", y="Count")+
   scale_x_continuous(breaks=0:1, labels = c("no", "yes"))
 ```
-
 
 ## Null model
 
@@ -81,8 +77,7 @@ get_prior(mspi_z ~ 1 + (1 | voiv),
 
 None of the default priors is flat. Thus, we can leave them as they are. One could try setting better priors, but this would be outside to scope of this course.
 
-To fit random effects (i.e., effects based on some defined clusters) you should use a formula which is based on `lme4` package:
-(random_effect | grouping_variable).
+To fit random effects (i.e., effects based on some defined clusters) you should use a formula which is based on `lme4` package: (random_effect \| grouping_variable).
 
 Here we are including a fixed as well as random intercepts (`1`). The fixed intercept refers to population mean, whereas the random intercept refers to cluster (voivodeship) means.
 
@@ -120,9 +115,7 @@ $$
 ICC = \frac{\sigma^2_{between}}{\sigma^2_{between} + \sigma^2_{within}}
 $$
 
-Thus this is a proportion of between cluster variance to the total variance -> to what extent clusters are responsible for the differences in the outcome variable.
-It can be also interpreted as an average correlation between subjects drawn randomly from the same cluster.
-Some argue that ICC should be above some threshold (e.g., .10) to motivate the use of multilevel modeling. However, even with smaller values it may make sense to use such models.
+Thus this is a proportion of between cluster variance to the total variance -\> to what extent clusters are responsible for the differences in the outcome variable. It can be also interpreted as an average correlation between subjects drawn randomly from the same cluster. Some argue that ICC should be above some threshold (e.g., .10) to motivate the use of multilevel modeling. However, even with smaller values it may make sense to use such models.
 
 Let's compute the ICC.
 
@@ -138,8 +131,7 @@ performance::icc(fit_null)
 
 Let's plot group level intercepts. Below I added also raw data based on simple computation of mean of mspi_z for each voivodeship.
 
-Note that fitted and raw values differ considerably. In particular fitted values tend to be shrunked around the population mean, i.e., they are less extreme than raw data. 
-Note that while fitted values are based on the entire sample (N = 1016), raw data are based on samples sizes from 30 to 151. Thus, fitted values can be deemed as more reliable (less biased) than raw data.
+Note that fitted and raw values differ considerably. In particular fitted values tend to be shrunked around the population mean, i.e., they are less extreme than raw data. Note that while fitted values are based on the entire sample (N = 1016), raw data are based on samples sizes from 30 to 151. Thus, fitted values can be deemed as more reliable (less biased) than raw data.
 
 ```{r}
 raw_est <- pps2 %>% 
@@ -166,7 +158,7 @@ nd %>%
 
 ## Random intercept model
 
-Now let's add an individual level predictor to our model. We will model it as a fixed effect (stable across clusters). We will still use fixed and random intercept. Note that `1` become the regression intercept (not the cluster level mean). 
+Now let's add an individual level predictor to our model. We will model it as a fixed effect (stable across clusters). We will still use fixed and random intercept. Note that `1` become the regression intercept (not the cluster level mean).
 
 ```{r}
 get_prior(mspi_z ~ 1 + pis + (1 | voiv),
@@ -184,7 +176,6 @@ fit_rand_int <- brm(mspi_z ~ 1 + pis + (1 | voiv),
                     prior = prior,
                     sample_prior = "yes")
 ```
-
 
 Let's print the model.
 
@@ -209,7 +200,7 @@ fitted_rand_int %>%
   ggtitle("Posterior distribution of random intercept")
 ```
 
-Let's do the same for slopes. Note that because we modeled slope as fixed posterior will look the same for each voivodeship. 
+Let's do the same for slopes. Note that because we modeled slope as fixed posterior will look the same for each voivodeship.
 
 ```{r}
 fitted_rand_int %>% 
@@ -226,7 +217,6 @@ fitted_rand_int %>%
   ggtitle("Posterior distribution of fixed slopes")
 ```
 
-
 ## Random slope model
 
 Let's try another model. This time we will treat intercept as fixed and the slope both as fixed and random.
@@ -238,7 +228,7 @@ fit_rand_slo <- brm(mspi_z ~ 1 + pis + (0 + pis | voiv),
                     sample_prior = "yes")
 ```
 
-Let's print the model. 
+Let's print the model.
 
 ```{r}
 fit_rand_slo
@@ -325,9 +315,9 @@ fitted_rand_int_slo %>%
   ggtitle("Posterior distribution of random slopes")
 ```
 
-## Contextual effects 
+## Contextual effects
 
-Finally, it's time to add a cluster level predictor. You can search through official databases to find variables such GDP, Gini, level of unemployment, etc. 
+Finally, it's time to add a cluster level predictor. You can search through official databases to find variables such GDP, Gini, level of unemployment, etc.
 
 I decided to choose a level of corruption. In the figure below, we see that there is quite a lot of variability in number of opened corruption cases between voivodeships. Can this be used as a predictor of conspiracy mentality?
 
@@ -355,7 +345,7 @@ Let's print the results.
 fit_cont_eff
 ```
 
-Level of corruptions seems to be unrelated to the average level of conspiracy mentality in the voivodeship.
+Level of corruption seems to be unrelated to the average level of conspiracy mentality in the voivodeship.
 
 ## Cross level interaction
 
@@ -378,14 +368,12 @@ Let's plot the results to understand this interaction a little bit better.
 
 ```{r}
 conditional_effects(fit_cross_int, "pis:corrupt_z", 
-                    int_conditions = list(corrupt_z = c(-1,1)),
-                    spaghetti = T, ndraw=100) %>% 
-  plot(line_args=list(colour=c("yellow")), plot=FALSE) %>% 
+                    int_conditions = list(corrupt_z = c(-1,1))) %>% 
+  plot(plot=FALSE) %>% 
   .[[1]]+
   scale_x_continuous(breaks=0:1, labels = c("no","yes"))+
-  scale_colour_manual(values = c(alpha("blue", 0.15),alpha("red", 0.15)))+
   labs(x="Voting for PiS", y="Conspiracy mentality (z-score)",
-       colour="Level of\ncorrupition\n(z-score)")
+       colour="Level of\ncorrupition\n(z-score)", fill="Level of\ncorrupition\n(z-score)")
 ```
 
 ## Which model you should use?
@@ -422,4 +410,3 @@ loo_rand_int_slo,
 loo_cont_eff,
 loo_cross_int)
 ```
-

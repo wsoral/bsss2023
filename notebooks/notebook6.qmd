@@ -124,9 +124,9 @@ avg_slopes(logistic_fit)
 
 ## Regression with a ordinal predicted variable
 
-In this example, we will use two variables: 
+In this example, we will use two variables:
 
-- dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject)
+-   dyst - this item measures to what extent individual would reject a homosexual relationship of a family member (1 = definitely would accept, 2 = would rather accept, 3 = would rather reject, 4 = definitely would reject)
 
 -   disg_sens - average score of a scale measuring sensitivity to several disgusting stimuli (rotten vegetables, vomits et al.)
 

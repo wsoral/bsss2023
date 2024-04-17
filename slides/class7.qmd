@@ -53,38 +53,38 @@ plot_grid(p1,p2,ncol = 1)
 
 ## Hierarchical Bayesian models
 
-- Hierarchical linear models
-- Multilevel linear models
-- Mixed effects linear models
-- Random effects models
-
-## <small>Dealing with structure in linear models</small> 
-
-- *students* nested in
-- *classes* nested in
-- *schools* nested in 
-- *districts*
+-   Hierarchical linear models
+-   Multilevel linear models
+-   Mixed effects linear models
+-   Random effects models
 
 ## <small>Dealing with structure in linear models</small>
 
-- *employees* nested in
-- *sections* nested in
-- *departments* nested in 
-- *branches*
+-   *students* nested in
+-   *classes* nested in
+-   *schools* nested in
+-   *districts*
 
-## <small>Dealing with structure in linear models</small> 
+## <small>Dealing with structure in linear models</small>
 
-- *voters* nested in
-- *communes* nested in
-- *counties* nested in 
-- *voivodeships*
+-   *employees* nested in
+-   *sections* nested in
+-   *departments* nested in
+-   *branches*
 
-## <small>Dealing with structure in linear models</small> 
+## <small>Dealing with structure in linear models</small>
 
-- *trials* nested in
-- *blocks* nested in
-- *measurements* nested in 
-- *conditions*
+-   *voters* nested in
+-   *communes* nested in
+-   *counties* nested in
+-   *voivodeships*
+
+## <small>Dealing with structure in linear models</small>
+
+-   *trials* nested in
+-   *blocks* nested in
+-   *measurements* nested in
+-   *conditions*
 
 ## Stucture of errors in linear models
 
@@ -120,99 +120,98 @@ $$
 
 ## Why use hierarchical models?
 
-- Can deal with interdependence between clustered observations -> reduce bias in regression coefficients
-- Can be used instead of aggregation of several responses -> better describe variance components
-- Can be used to introduce predictors at various levels -> modeling contextual effects
+-   Can deal with interdependence between clustered observations -\> reduce bias in regression coefficients
+-   Can be used instead of aggregation of several responses -\> better describe variance components
+-   Can be used to introduce predictors at various levels -\> modeling contextual effects
 
 ## <small>Why use Bayesian hierarchical models?</small>
 
-- Bayesian (vs. frequentists) hierarchical models are more intuitive: see hierarchical priors
-- Bayesian (vs. frequentists) hierarchical models can be used even when number of clusters at higher levels is quite small
-- Bayesian (vs. frequentists) hierarchical models can more easily recover group/cluster effects
+-   Bayesian (vs. frequentists) hierarchical models are more intuitive: see hierarchical priors
+-   Bayesian (vs. frequentists) hierarchical models can be used even when number of clusters at higher levels is quite small
+-   Bayesian (vs. frequentists) hierarchical models can more easily recover group/cluster effects
 
 ## Null model
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{j},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{j},\ \sigma)\\
 \mu_{j} \sim \mathcal{N}(\gamma_{00},\ \tau_{0})\\
 \gamma_{00} \sim \mathcal{N}(0, 1)\\
 \tau_0 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Random intercept model
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma)\\
 \mu_{ij} = \beta_{j0} + \beta_{1}x_{ij}\\
 \beta_{j0} \sim \mathcal{N}(\gamma_{00},\ \tau_{0})\\
 \beta_{1} \sim \mathcal{N}(0, 1)\\
 \gamma_{00} \sim \mathcal{N}(0, 1)\\
 \tau_0 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Random slope model
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma)\\
 \mu_{ij} = \beta_{0} + \beta_{j1}x_{ij}\\
 \beta_{0} \sim \mathcal{N}(0, 1)\\
 \beta_{j1} \sim \mathcal{N}(\gamma_{10},\ \tau_{1})\\
 \gamma_{10} \sim \mathcal{N}(0, 1)\\
 \tau_1 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Random intercept-and-slope model
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma)\\
 \mu_{ij} = \beta_{j0} + \beta_{j1}x_{ij}\\
 \beta_{j0} \sim \mathcal{N}(\gamma_{00},\ \tau_{0})\\
 \beta_{j1} \sim \mathcal{N}(\gamma_{10},\ \tau_{1})\\
 \gamma_{00}, \gamma_{10}  \sim \mathcal{N}(0, 1)\\
 \tau_0, \tau_1 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Contextual effects
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma)\\
 \mu_{ij} = \beta_{j0} + \beta_{j1}x_{ij}\\
 \beta_{j0} \sim \mathcal{N}(\gamma_{00} + \gamma_{01}Z_j,\ \tau_{0})\\
 \beta_{j1} \sim \mathcal{N}(\gamma_{10},\ \tau_{1})\\
 \gamma_{00}, \gamma_{01}, \gamma_{10} \sim \mathcal{N}(0, 1)\\
 \tau_0, \tau_1 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Cross-level interactions
 
 $$
-y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma_{ij})\\
+y_{ij} \sim \mathcal{N}(\mu_{ij},\ \sigma)\\
 \mu_{ij} = \beta_{j0} + \beta_{j1}x_{ij}\\
 \beta_{j0} \sim \mathcal{N}(\gamma_{00} + \gamma_{01}Z_j,\ \tau_{0})\\
 \beta_{j1} \sim \mathcal{N}(\gamma_{10} + \gamma_{11}Z_j,\ \tau_{1})\\
 \gamma_{00}, \gamma_{01}, \gamma_{10}, \gamma_{11} \sim \mathcal{N}(0, 1)\\
 \tau_0, \tau_1 \sim \mathcal{HN}(0, 1)\\
-\sigma_{ij} \sim \mathcal{HN}(0, 1)
+\sigma \sim \mathcal{HN}(0, 1)
 $$
 
 ## Final test
 
-- Bayesian workflow
-- SEXIT framework testing
-- Model selection with information criteria
-- Linear regression models (with robust models)
-- Models with interactions (probing interactions)
-- Generalized linear models (with dichotomous, ordinal, and nominal predicted variables)
+-   Bayesian workflow
+-   SEXIT framework testing
+-   Model selection with information criteria
+-   Linear regression models (with robust models)
+-   Models with interactions (probing interactions)
+-   Generalized linear models (with dichotomous, ordinal, and nominal predicted variables)
 
 ## Final test
 
-- 40 minutes to
-- conduct a full Bayesian analysis (on a selected problem), describe and interpret the results
-- you can use your notes, your home assignments, class slides and notebooks, as well as `brms` and R documentation
-- consulting with others is prohibited
-
+-   40 minutes to
+-   conduct a full Bayesian analysis (on a selected problem), describe and interpret the results
+-   you can use your notes, your home assignments, class slides and notebooks, as well as `brms` and R documentation
+-   consulting with others is prohibited
